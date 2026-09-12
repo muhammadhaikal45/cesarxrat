@@ -7,368 +7,168 @@
     <link rel="stylesheet" href="style.css">
     <style>
         body {
-            background: #0a0e27;
-            color: #e0e8ff;
+            background: #0a0e27; color: #e0e8ff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: block;
-            min-height: 100vh;
+            margin: 0; padding: 0; display: block; min-height: 100vh;
         }
         .chat-container {
-            max-width: 480px;
-            margin: auto;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            box-sizing: border-box;
+            max-width: 480px; margin: auto; padding: 16px;
+            display: flex; flex-direction: column;
+            height: 100vh; box-sizing: border-box;
         }
         .chat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; padding-bottom: 10px;
             border-bottom: 2px solid #2a4a8a;
         }
-        .chat-header h1 {
-            font-size: 24px;
-            color: #4a9eff;
-            margin: 0;
-        }
+        .chat-header h1 { font-size: 24px; color: #4a9eff; margin: 0; }
         .chat-header .back-btn {
-            color: #4a9eff;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            background: transparent;
-            border: 2px solid #4a9eff;
-            padding: 6px 16px;
-            border-radius: 50px;
-            transition: 0.3s;
+            color: #4a9eff; cursor: pointer; font-size: 16px;
+            font-weight: bold; background: transparent;
+            border: 2px solid #4a9eff; padding: 6px 16px;
+            border-radius: 50px; transition: 0.3s;
         }
-        .chat-header .back-btn:hover {
-            background: #4a9eff;
-            color: #fff;
-        }
+        .chat-header .back-btn:hover { background: #4a9eff; color: #fff; }
         .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            background: #111a3a;
-            border-radius: 16px;
-            padding: 14px;
-            border: 1px solid #2a4a8a;
-            margin-bottom: 12px;
+            flex: 1; overflow-y: auto; background: #111a3a;
+            border-radius: 16px; padding: 14px;
+            border: 1px solid #2a4a8a; margin-bottom: 12px;
             max-height: 70vh;
         }
         .chat-messages .message {
-            padding: 8px 12px;
-            margin-bottom: 6px;
-            border-radius: 12px;
-            background: #0e1635;
-            border-left: 4px solid #4a9eff;
-            word-wrap: break-word;
+            padding: 8px 12px; margin-bottom: 6px;
+            border-radius: 12px; background: #0e1635;
+            border-left: 4px solid #4a9eff; word-wrap: break-word;
         }
         .chat-messages .message .sender {
-            font-weight: bold;
-            color: #4a9eff;
-            font-size: 14px;
+            font-weight: bold; color: #4a9eff; font-size: 14px;
         }
         .chat-messages .message .time {
-            font-size: 10px;
-            color: #6a8abf;
-            margin-left: 8px;
+            font-size: 10px; color: #6a8abf; margin-left: 8px;
         }
         .chat-messages .message .text {
-            font-size: 15px;
-            color: #c0d8ff;
-            margin-top: 2px;
+            font-size: 15px; color: #c0d8ff; margin-top: 2px;
         }
         .chat-messages .message.self {
-            border-left-color: #4ae0a0;
-            background: #0e1a2e;
+            border-left-color: #4ae0a0; background: #0e1a2e;
         }
-        .chat-messages .message.self .sender {
-            color: #4ae0a0;
-        }
+        .chat-messages .message.self .sender { color: #4ae0a0; }
         .chat-input-area {
-            display: flex;
-            gap: 10px;
-            background: #111a3a;
-            padding: 10px 12px;
-            border-radius: 50px;
+            display: flex; gap: 10px; background: #111a3a;
+            padding: 10px 12px; border-radius: 50px;
             border: 1px solid #2a4a8a;
         }
         .chat-input-area input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: #e0e8ff;
-            font-size: 16px;
-            outline: none;
-            padding: 8px 4px;
+            flex: 1; background: transparent; border: none;
+            color: #e0e8ff; font-size: 16px; outline: none; padding: 8px 4px;
         }
-        .chat-input-area input::placeholder {
-            color: #6a8abf;
-        }
+        .chat-input-area input::placeholder { color: #6a8abf; }
         .chat-input-area button {
             background: linear-gradient(135deg, #4a9eff, #1a5bbf);
-            border: none;
-            color: #fff;
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+            border: none; color: #fff; padding: 8px 20px;
+            border-radius: 50px; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
             box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
         }
-        .chat-input-area button:hover {
-            transform: scale(1.03);
-            box-shadow: 0 6px 25px rgba(74, 158, 255, 0.5);
-        }
+        .chat-input-area button:hover { transform: scale(1.03); }
         .chat-info {
-            text-align: center;
-            font-size: 12px;
-            color: #6a8abf;
-            margin-top: 6px;
+            text-align: center; font-size: 12px;
+            color: #6a8abf; margin-top: 6px;
         }
-        /* Scrollbar styling */
-        .chat-messages::-webkit-scrollbar {
-            width: 4px;
-        }
-        .chat-messages::-webkit-scrollbar-track {
-            background: #0a0e27;
-        }
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-track { background: #0a0e27; }
         .chat-messages::-webkit-scrollbar-thumb {
-            background: #4a9eff;
-            border-radius: 10px;
+            background: #4a9eff; border-radius: 10px;
         }
     </style>
 </head>
 <body>
 
     <div class="chat-container">
-
-        <!-- HEADER -->
         <div class="chat-header">
             <h1>💬 Global Chat</h1>
             <button class="back-btn" onclick="history.back()">Kembali</button>
         </div>
 
-        <!-- AREA PESAN -->
-        <div class="chat-messages" id="chatMessages">
-            <!-- Pesan akan muncul di sini -->
-        </div>
+        <div class="chat-messages" id="chatMessages"></div>
 
-        <!-- INPUT PESAN -->
         <div class="chat-input-area">
             <input type="text" id="chatInput" placeholder="Ketik pesan..." autofocus>
             <button id="sendBtn">Kirim</button>
         </div>
-        <div class="chat-info">💡 Pesan akan muncul di semua tab yang membuka dashboard ini</div>
+        <div class="chat-info">💡 Pesan real-time dari semua pengguna</div>
     </div>
 
-    <script>
-        // =====================================================
-        // 1. AMBIL DATA USER DARI LOCAL STORAGE
-        // =====================================================
+    <script type="module">
+        import { db, ref, onValue, push, serverTimestamp } from './firebase-config.js';
+
         const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) {
-            window.location.href = 'login.html';
-        }
+        if (!user) window.location.href = 'login.html';
+
         const username = user.username || 'guest';
         const role = user.role || 'buyer';
+        const senderName = role === 'admin' ? 'admin' : username;
 
-        // =====================================================
-        // 2. INISIALISASI CHAT
-        // =====================================================
-        const CHAT_KEY = 'cesarxrat_chat_messages';
-        const MAX_MESSAGES = 50;
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (text === '') { input.focus(); return; }
 
-        // 2a. Broadcast Channel untuk real-time antar tab
-        let channel;
-        try {
-            channel = new BroadcastChannel('cesarxrat_chat_channel');
-        } catch (e) {
-            channel = null;
-        }
-
-        // 2b. Ambil pesan dari LocalStorage
-        function getMessages() {
-            try {
-                const raw = localStorage.getItem(CHAT_KEY);
-                if (raw) {
-                    const messages = JSON.parse(raw);
-                    if (Array.isArray(messages)) {
-                        return messages;
-                    }
-                }
-            } catch (e) {
-                // ignore
-            }
-            return [];
-        }
-
-        // 2c. Simpan pesan ke LocalStorage
-        function saveMessages(messages) {
-            // Batasi jumlah pesan
-            if (messages.length > MAX_MESSAGES) {
-                messages = messages.slice(-MAX_MESSAGES);
-            }
-            localStorage.setItem(CHAT_KEY, JSON.stringify(messages));
-        }
-
-        // 2d. Tambahkan pesan baru
-        function addMessage(sender, text, isSelf) {
-            const messages = getMessages();
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' +
-                            now.getMinutes().toString().padStart(2, '0');
-            messages.push({
-                sender: sender,
+            const messagesRef = ref(db, 'chat/messages');
+            push(messagesRef, {
+                sender: senderName,
                 text: text,
-                time: timeStr,
-                isSelf: isSelf || false,
-                timestamp: now.getTime()
+                timestamp: serverTimestamp()
             });
-            saveMessages(messages);
-            renderMessages();
-            // Kirim update ke tab lain
-            if (channel) {
-                try {
-                    channel.postMessage({
-                        type: 'new_message',
-                        sender: sender,
-                        text: text,
-                        time: timeStr,
-                        isSelf: isSelf || false,
-                        timestamp: now.getTime()
-                    });
-                } catch (e) {
-                    // ignore
-                }
-            }
+
+            input.value = '';
+            input.focus();
         }
 
-        // 2e. Render pesan ke tampilan
-        function renderMessages() {
+        const messagesRef = ref(db, 'chat/messages');
+        onValue(messagesRef, (snapshot) => {
+            const data = snapshot.val();
             const container = document.getElementById('chatMessages');
-            const messages = getMessages();
-            if (messages.length === 0) {
+
+            if (!data) {
                 container.innerHTML = '<div style="text-align:center;color:#6a8abf;padding:30px 0;">Belum ada pesan. Mulai obrolan!</div>';
                 return;
             }
+
+            const messages = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
             let html = '';
             messages.forEach(function(msg) {
-                const selfClass = msg.isSelf ? 'self' : '';
-                const senderDisplay = msg.isSelf ? 'Anda' : msg.sender;
+                const isSelf = (msg.sender === senderName);
+                const selfClass = isSelf ? 'self' : '';
+                const senderDisplay = isSelf ? 'Anda' : msg.sender;
+                const timeStr = new Date(msg.timestamp).toLocaleTimeString('id-ID', {
+                    hour: '2-digit', minute: '2-digit'
+                });
+
                 html += `
                     <div class="message ${selfClass}">
-                        <div class="sender">${senderDisplay} <span class="time">${msg.time}</span></div>
+                        <div class="sender">${senderDisplay} <span class="time">${timeStr}</span></div>
                         <div class="text">${escapeHtml(msg.text)}</div>
                     </div>
                 `;
             });
             container.innerHTML = html;
-            // Scroll ke bawah
             container.scrollTop = container.scrollHeight;
-        }
+        });
 
-        // 2f. Escape HTML untuk keamanan
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // 2g. Kirim pesan
-        function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if (text === '') {
-                input.focus();
-                return;
-            }
-            // Tampilkan nama pengguna dengan role
-            const senderName = role === 'admin' ? 'admin' : username;
-            addMessage(senderName, text, true);
-            input.value = '';
-            input.focus();
-            // Scroll ke bawah setelah render
-            setTimeout(function() {
-                const container = document.getElementById('chatMessages');
-                container.scrollTop = container.scrollHeight;
-            }, 50);
-        }
-
-        // =====================================================
-        // 3. EVENT LISTENER UNTUK PESAN DARI TAB LAIN
-        // =====================================================
-        if (channel) {
-            channel.addEventListener('message', function(event) {
-                const data = event.data;
-                if (data && data.type === 'new_message') {
-                    // Cek apakah pesan ini sudah ada (hindari duplikat)
-                    const messages = getMessages();
-                    const exists = messages.some(function(msg) {
-                        return msg.sender === data.sender &&
-                               msg.text === data.text &&
-                               msg.time === data.time &&
-                               msg.timestamp === data.timestamp;
-                    });
-                    if (!exists) {
-                        // Tambahkan pesan dari tab lain (bukan milik sendiri)
-                        const isSelf = false;
-                        messages.push({
-                            sender: data.sender,
-                            text: data.text,
-                            time: data.time,
-                            isSelf: isSelf,
-                            timestamp: data.timestamp || Date.now()
-                        });
-                        saveMessages(messages);
-                        renderMessages();
-                        // Scroll ke bawah
-                        const container = document.getElementById('chatMessages');
-                        container.scrollTop = container.scrollHeight;
-                    }
-                }
-            });
-        }
-
-        // =====================================================
-        // 4. EVENT LISTENER UNTUK TOMBOL & ENTER
-        // =====================================================
         document.getElementById('sendBtn').addEventListener('click', sendMessage);
         document.getElementById('chatInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendMessage();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
         });
 
-        // =====================================================
-        // 5. RENDER PESAN AWAL
-        // =====================================================
-        renderMessages();
-
-        // =====================================================
-        // 6. UPDATE REAL-TIME SETIAP 3 DETIK (sync antar tab)
-        // =====================================================
-        setInterval(function() {
-            // Cek apakah ada pesan baru dari localStorage yang belum ditampilkan
-            // (ini untuk fallback jika BroadcastChannel tidak bekerja)
-            renderMessages();
-        }, 3000);
-
-        // =====================================================
-        // 7. FOKUS KE INPUT SAAT HALAMAN DIMUAT
-        // =====================================================
         document.getElementById('chatInput').focus();
-
-        console.log('[CESARXRAT] Global Chat berjalan real-time');
+        console.log('[CESARXRAT] Global Chat real-time aktif');
     </script>
-
 </body>
 </html>
