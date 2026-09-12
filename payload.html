@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payload - CESARXRAT</title>
+    <style>
+        body {
+            background: #0a0e27; color: #e0e8ff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 20px;
+        }
+        .box {
+            background: #111a3a; border-radius: 20px;
+            padding: 30px; border: 1px solid #2a4a8a;
+            max-width: 400px; width: 100%; text-align: center;
+        }
+        h1 { color: #4a9eff; margin-bottom: 10px; }
+        p { color: #8899dd; font-size: 14px; margin-bottom: 20px; }
+        button {
+            background: linear-gradient(135deg, #4a9eff, #1a5bbf);
+            border: none; color: #fff;
+            padding: 14px 30px; border-radius: 50px;
+            font-weight: bold; font-size: 16px;
+            cursor: pointer; width: 100%; transition: 0.3s;
+        }
+        button:hover { transform: scale(1.02); }
+        .info {
+            background: #0a0e27; padding: 12px;
+            border-radius: 12px; margin-top: 16px;
+            font-size: 13px; color: #6a8abf;
+            border: 1px solid #2a4a8a;
+        }
+        .info span { color: #4ae0a0; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>📱 Payload Simulator</h1>
+        <p>Simulasi perangkat target yang terhubung ke dashboard CESARXRAT.</p>
+        <button onclick="connectTarget()">Hubungkan Perangkat Target</button>
+        <div class="info">Status: <span id="status">Belum Terhubung</span></div>
+    </div>
+
+    <script type="module">
+        import { db, ref, set, serverTimestamp } from './firebase-config.js';
+
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            let name = 'Android Device';
+            let os = 'Android';
+            
+            if (ua.includes('Android')) {
+                const match = ua.match(/Android\s([\d.]+)/);
+                os = 'Android ' + (match ? match[1] : '');
+            }
+            if (ua.includes('SM-A055F')) name = 'Samsung SM-A055F';
+            else if (ua.includes('Redmi')) name = 'Xiaomi Redmi';
+            else if (ua.includes('Vivo')) name = 'Vivo';
+            
+            return { name: name, os: os, tweak: 'Defeats' };
+        }
+
+        window.connectTarget = function() {
+            const info = getDeviceInfo();
+            const targetRef = ref(db, 'targets/active');
+            set(targetRef, {
+                name: info.name,
+                os: info.os,
+                tweak: info.tweak,
+                timestamp: serverTimestamp()
+            });
+            
+            document.getElementById('status').textContent = 'Terhubung ✅';
+            document.getElementById('status').style.color = '#4ae0a0';
+
+            setInterval(() => {
+                const updated = getDeviceInfo();
+                set(targetRef, {
+                    name: updated.name,
+                    os: updated.os,
+                    tweak: updated.tweak,
+                    timestamp: serverTimestamp()
+                });
+            }, 10000);
+        };
+    </script>
+</body>
+</html>
