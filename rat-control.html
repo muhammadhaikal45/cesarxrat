@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAT Control - CESARXRAT</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Tambahan style khusus untuk RAT Control */
+        .rat-container {
+            max-width: 480px;
+            margin: auto;
+            padding: 20px 16px;
+        }
+        .rat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .rat-header h1 {
+            font-size: 24px;
+            color: #4a9eff;
+            margin: 0;
+        }
+        .rat-header .online-status {
+            color: #4ae0a0;
+            font-size: 14px;
+            font-weight: bold;
+            background: rgba(74, 224, 160, 0.15);
+            padding: 6px 14px;
+            border-radius: 50px;
+            border: 1px solid #4ae0a0;
+        }
+        .device-info {
+            background: linear-gradient(145deg, #12123a, #1a1a4e);
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin: 12px 0 20px 0;
+            border: 1px solid #2a2a7a;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .device-info .icon {
+            font-size: 40px;
+            background: #0b0b2a;
+            padding: 10px;
+            border-radius: 16px;
+            border: 1px solid #2a2a7a;
+        }
+        .device-info .detail {
+            flex: 1;
+        }
+        .device-info .detail .name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .device-info .detail .os {
+            font-size: 14px;
+            color: #8899dd;
+            margin-top: 2px;
+        }
+        .device-info .detail .tweak {
+            font-size: 12px;
+            color: #4a9eff;
+            background: rgba(74, 158, 255, 0.15);
+            padding: 2px 10px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-top: 4px;
+            border: 1px solid #4a9eff;
+        }
+        .section-title {
+            color: #8899dd;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0 12px 0;
+            border-bottom: 1px solid #2a2a7a;
+            padding-bottom: 6px;
+        }
+        /* GRID KOTAK-KOTAK seperti gambar kedua */
+        .grid-control {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 10px;
+        }
+        .control-box {
+            background: #12123a;
+            border-radius: 18px;
+            padding: 18px 12px;
+            text-align: center;
+            border: 1px solid #2a2a7a;
+            transition: 0.3s;
+        }
+        .control-box:hover {
+            border-color: #4a9eff;
+            box-shadow: 0 0 20px rgba(74, 158, 255, 0.15);
+        }
+        .control-box .icon {
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+        .control-box .label {
+            font-weight: 600;
+            color: #c0d0ff;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .control-box .label span {
+            font-size: 12px;
+            color: #ff6b6b;
+            display: block;
+            margin-top: 2px;
+        }
+        .control-box .label span.on {
+            color: #4ae0a0;
+        }
+        /* Switch di dalam kotak */
+        .switch-lg {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+        .switch-lg input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .switch-lg .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #2a2a5a;
+            transition: 0.4s;
+            border-radius: 34px;
+            border: 1px solid #4a4a8a;
+        }
+        .switch-lg .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #888;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        .switch-lg input:checked + .slider {
+            background: #4a9eff;
+            border-color: #4a9eff;
+        }
+        .switch-lg input:checked + .slider:before {
+            transform: translateX(22px);
+            background: #fff;
+        }
+        .btn-back {
+            background: transparent;
+            border: 2px solid #4a9eff;
+            color: #4a9eff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            margin-top: 24px;
+            text-align: center;
+        }
+        .btn-back:hover {
+            background: #4a9eff;
+            color: #fff;
+        }
+    </style>
+</head>
+<body style="background:#0b0b2a;color:#fff;min-height:100vh;display:block;padding:0;margin:0;">
+
+    <div class="rat-container">
+
+        <!-- HEADER dengan status online -->
+        <div class="rat-header">
+            <h1>RAT CONTROL</h1>
+            <span class="online-status">● ONLINE</span>
+        </div>
+
+        <!-- INFO DEVICE TARGET -->
+        <div class="device-info">
+            <div class="icon">📱</div>
+            <div class="detail">
+                <div class="name">Samsung SM-A055F</div>
+                <div class="os">- Android 11 - 8.7W -</div>
+                <div class="tweak">Tweak: Defeats</div>
+            </div>
+        </div>
+
+        <!-- REMOTE KONTROL -->
+        <div class="section-title">REMOTE KONTROL</div>
+
+        <!-- GRID KOTAK-KOTAK (4 fitur) -->
+        <div class="grid-control">
+            <!-- Flash -->
+            <div class="control-box">
+                <div class="icon">💡</div>
+                <span class="label">Flash <span id="flashStatus">OFF</span></span>
+                <label class="switch-lg">
+                    <input type="checkbox" id="flash">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <!-- Lock Device -->
+            <div class="control-box">
+                <div class="icon">🔒</div>
+                <span class="label">Lock Device <span id="lockStatus">OFF</span></span>
+                <label class="switch-lg">
+                    <input type="checkbox" id="lock">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <!-- Live Camera -->
+            <div class="control-box">
+                <div class="icon">📷</div>
+                <span class="label">Live Camera <span id="cameraStatus">OFF</span></span>
+                <label class="switch-lg">
+                    <input type="checkbox" id="camera">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <!-- Live Screen -->
+            <div class="control-box">
+                <div class="icon">🖥️</div>
+                <span class="label">Live Screen <span id="screenStatus">OFF</span></span>
+                <label class="switch-lg">
+                    <input type="checkbox" id="screen">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Tombol Kembali -->
+        <button class="btn-back" onclick="history.back()">Kembali</button>
+    </div>
+
+    <script>
+        // Fungsi untuk update status teks ON/OFF dan warna
+        function updateStatus(checkboxId, statusId) {
+            const checkbox = document.getElementById(checkboxId);
+            const statusSpan = document.getElementById(statusId);
+            if (checkbox.checked) {
+                statusSpan.textContent = 'ON';
+                statusSpan.className = 'on';
+            } else {
+                statusSpan.textContent = 'OFF';
+                statusSpan.className = '';
+            }
+        }
+
+        // Pasang event listener untuk setiap checkbox
+        const controls = [
+            { checkbox: 'flash', status: 'flashStatus' },
+            { checkbox: 'lock', status: 'lockStatus' },
+            { checkbox: 'camera', status: 'cameraStatus' },
+            { checkbox: 'screen', status: 'screenStatus' }
+        ];
+
+        controls.forEach(function(item) {
+            const cb = document.getElementById(item.checkbox);
+            cb.addEventListener('change', function() {
+                updateStatus(item.checkbox, item.status);
+            });
+            // Inisialisasi status awal
+            updateStatus(item.checkbox, item.status);
+        });
+    </script>
+
+</body>
+</html>

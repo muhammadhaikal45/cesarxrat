@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - CESARXRAT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>CESARXRAT</h1>
+            <h2 style="font-size:20px;margin:10px 0 20px;">REGISTER</h2>
+            <form id="registerForm">
+                <input type="email" id="regEmail" placeholder="Email" required>
+                <input type="text" id="regUsername" placeholder="Username" required>
+                <input type="password" id="regPassword" placeholder="Password" required>
+                <input type="password" id="regConfirm" placeholder="Confirm Password" required>
+                <button type="submit" class="btn-primary">DAFTAR</button>
+            </form>
+            <p style="text-align:center;margin-top:18px;color:#8899dd;">Sudah punya akun? <a href="login.html" class="link">MASUK</a></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const pass = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+            if(pass !== confirm) {
+                alert('Password tidak cocok!');
+                return;
+            }
+            alert('Registrasi berhasil! Silakan login.');
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>

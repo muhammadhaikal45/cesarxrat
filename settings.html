@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Setting</title><link rel="stylesheet" href="style.css"></head>
+<body style="display:block;padding:20px;">
+<div style="max-width:480px;margin:auto;">
+    <h1>⚙️ Setting Akun</h1>
+    <div class="card" style="margin-top:15px;">
+        <div id="info"></div>
+    </div>
+    <button class="btn-secondary" style="width:100%;margin-top:20px;" onclick="history.back()">Kembali</button>
+</div>
+<script>
+const u = JSON.parse(localStorage.getItem('user'));
+document.getElementById('info').innerHTML = `
+    <p><b>Username:</b> ${u.username}</p>
+    <p><b>Email:</b> ${u.email}</p>
+    <p><b>Role:</b> ${u.role}</p>
+`;
+</script>
+</body></html>

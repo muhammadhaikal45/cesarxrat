@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CESARXRAT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>CESARXRAT</h1>
+            <h2 style="font-size:20px;margin:10px 0 20px;">PANEL CONTROLLER</h2>
+            <form id="loginForm">
+                <input type="email" id="email" placeholder="Email Anda" required>
+                <input type="password" id="password" placeholder="Kata Sandi" required>
+                <button type="submit" class="btn-primary">MASUK</button>
+            </form>
+            <p style="text-align:center;margin-top:18px;color:#8899dd;">Belum punya akun? <a href="register.html" class="link">DAFTAR</a></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            if(email === 'mhdmhaikal123@gmail.com' && pass === 'admin') {
+                localStorage.setItem('user', JSON.stringify({username:'admin', email, role:'admin'}));
+                window.location.href = 'dashboard.html';
+            } else {
+                localStorage.setItem('user', JSON.stringify({username:'ikel', email, role:'buyer'}));
+                window.location.href = 'dashboard.html';
+            }
+        });
+    </script>
+</body>
+</html>
