@@ -93,14 +93,14 @@
         <div class="chat-messages" id="chatMessages"></div>
 
         <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Ketik pesan..." autofocus>
+            <input type="text" id="chatInput" placeholder="Ketik pesan..." autofocus maxlength="200">
             <button id="sendBtn">Kirim</button>
         </div>
         <div class="chat-info">💡 Pesan real-time dari semua pengguna</div>
     </div>
 
     <script type="module">
-        import { db, ref, onValue, push, serverTimestamp } from './firebase-config.js';
+        import { db, ref, onValue, push } from './firebase-config.js';
 
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) window.location.href = 'login.html';
@@ -114,11 +114,16 @@
             const text = input.value.trim();
             if (text === '') { input.focus(); return; }
 
+            if (text.length > 200) {
+                alert('Pesan maksimal 200 karakter!');
+                return;
+            }
+
             const messagesRef = ref(db, 'chat/messages');
             push(messagesRef, {
                 sender: senderName,
                 text: text,
-                timestamp: serverTimestamp()
+                timestamp: Date.now()
             });
 
             input.value = '';
@@ -147,7 +152,7 @@
 
                 html += `
                     <div class="message ${selfClass}">
-                        <div class="sender">${senderDisplay} <span class="time">${timeStr}</span></div>
+                        <div class="sender">${escapeHtml(senderDisplay)} <span class="time">${timeStr}</span></div>
                         <div class="text">${escapeHtml(msg.text)}</div>
                     </div>
                 `;
