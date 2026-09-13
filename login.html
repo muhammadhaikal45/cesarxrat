@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CESARXRAT</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .error-msg {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        .success-msg {
+            color: #4ae0a0;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -12,24 +32,82 @@
             <h1>CESARXRAT</h1>
             <h2 style="font-size:20px;margin:10px 0 20px;">PANEL CONTROLLER</h2>
             <form id="loginForm">
-                <input type="email" id="email" placeholder="Email Anda" required>
-                <input type="password" id="password" placeholder="Kata Sandi" required>
-                <button type="submit" class="btn-primary">MASUK</button>
+                <input type="email" id="email" placeholder="Email Anda" required autocomplete="email">
+                <input type="password" id="password" placeholder="Kata Sandi" required autocomplete="current-password">
+                <button type="submit" class="btn-primary" id="btnLogin">MASUK</button>
             </form>
-            <p style="text-align:center;margin-top:18px;color:#8899dd;">Belum punya akun? <a href="register.html" class="link">DAFTAR</a></p>
+            <div id="message" class="error-msg"></div>
+            <p style="text-align:center;margin-top:18px;color:#8899dd;">
+                Belum punya akun? <a href="register.html" class="link">DAFTAR</a>
+            </p>
         </div>
     </div>
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+
+    <script type="module">
+        import { auth, signInWithEmailAndPassword, onAuthStateChanged, db, ref, get, child }
+            from './firebase-config.js';
+
+        // ===== AUTO-LOGIN =====
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = 'dashboard.html';
+            }
+        });
+
+        // ===== LOGIN HANDLER =====
+        const loginForm = document.getElementById('loginForm');
+        const btnLogin = document.getElementById('btnLogin');
+        const message = document.getElementById('message');
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            if(email === 'mhdmhaikal123@gmail.com' && pass === 'admin') {
-                localStorage.setItem('user', JSON.stringify({username:'admin', email, role:'admin'}));
-                window.location.href = 'dashboard.html';
-            } else {
-                localStorage.setItem('user', JSON.stringify({username:'ikel', email, role:'buyer'}));
-                window.location.href = 'dashboard.html';
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            message.textContent = '';
+            message.className = 'error-msg';
+            btnLogin.disabled = true;
+            btnLogin.textContent = 'MEMPROSES...';
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                const dbRef = ref(db);
+                const snapshot = await get(child(dbRef, 'users/' + user.uid));
+                let role = 'buyer';
+                let username = user.displayName || 'User';
+
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    role = data.role || 'buyer';
+                    username = data.username || username;
+                }
+
+                localStorage.setItem('user', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    username: username,
+                    role: role
+                }));
+
+                message.className = 'success-msg';
+                message.textContent = '✅ Login berhasil!';
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 800);
+
+            } catch (error) {
+                let errMsg = 'Login gagal!';
+                if (error.code === 'auth/user-not-found') errMsg = 'Email tidak terdaftar!';
+                else if (error.code === 'auth/wrong-password') errMsg = 'Password salah!';
+                else if (error.code === 'auth/invalid-email') errMsg = 'Format email tidak valid!';
+                else if (error.code === 'auth/invalid-credential') errMsg = 'Email atau password salah!';
+                else if (error.code === 'auth/too-many-requests') errMsg = 'Terlalu banyak percobaan. Coba lagi nanti!';
+
+                message.textContent = '❌ ' + errMsg;
+                btnLogin.disabled = false;
+                btnLogin.textContent = 'MASUK';
             }
         });
     </script>
