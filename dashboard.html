@@ -156,10 +156,10 @@
 
         <div class="welcome-card">
             <div class="greeting">
-                Welcome Back, <span id="userName">ikel</span>
-                <small id="userRole">BUYER</small>
+                Welcome Back, <span id="userName">Memuat...</span>
+                <small id="userRole">MEMUAT...</small>
             </div>
-            <span class="role-badge" id="roleBadge">BUYER</span>
+            <span class="role-badge" id="roleBadge">MEMUAT...</span>
 
             <div class="info-grid">
                 <div class="info-item">
@@ -195,7 +195,7 @@
         <div class="expiration-box">
             <div>
                 <div class="label">⏳ Expiration</div>
-                <div class="value" id="expirationDate">99999-09-9</div>
+                <div class="value" id="expirationDate">Memuat...</div>
             </div>
             <button class="btn-buy" onclick="alert('Pilih paket:\n15k - 1 bulan\n100k - 1 tahun')">Buy License</button>
         </div>
@@ -216,15 +216,63 @@
     </div>
 
     <script type="module">
-        import { db, ref, onValue, set, onDisconnect, serverTimestamp } from './firebase-config.js';
+        import { auth, onAuthStateChanged, signOut,
+                 db, ref, get, child, onValue, set, onDisconnect, serverTimestamp }
+            from './firebase-config.js';
 
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) window.location.href = 'login.html';
+        // ===== AUTO-LOGIN + AMBIL DATA USER =====
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
 
-        document.getElementById('userName').textContent = user.username || 'ikel';
-        document.getElementById('userRole').textContent = (user.role || 'buyer').toUpperCase();
-        document.getElementById('roleBadge').textContent = (user.role || 'buyer').toUpperCase();
+            // Ambil data user dari database
+            const snapshot = await get(child(ref(db), 'users/' + user.uid));
+            let username = user.displayName || 'User';
+            let role = 'buyer';
+            let expiration = 'Tidak ada';
 
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                username = data.username || username;
+                role = data.role || role;
+                expiration = data.expiration || expiration;
+            }
+
+            document.getElementById('userName').textContent = username;
+            document.getElementById('userRole').textContent = role.toUpperCase();
+            document.getElementById('roleBadge').textContent = role.toUpperCase();
+            document.getElementById('expirationDate').textContent = expiration;
+
+            // Simpan ke localStorage untuk fallback
+            localStorage.setItem('user', JSON.stringify({
+                uid: user.uid,
+                email: user.email,
+                username: username,
+                role: role
+            }));
+
+            // ===== ONLINE STATUS =====
+            const SESSION_ID = 'session_' + user.uid + '_' + Date.now();
+            const userRef = ref(db, 'online/' + SESSION_ID);
+            set(userRef, {
+                username: username,
+                role: role,
+                timestamp: serverTimestamp()
+            });
+            onDisconnect(userRef).remove();
+
+            const onlineRef = ref(db, 'online');
+            onValue(onlineRef, (snap) => {
+                const data = snap.val();
+                const onlineCount = data ? Object.keys(data).length : 0;
+                document.getElementById('onlineUsers').textContent = onlineCount;
+                document.getElementById('activeConnections').textContent = onlineCount;
+            });
+        });
+
+        // ===== DEVICE INFO =====
         function getDeviceName() {
             const ua = navigator.userAgent;
             if (ua.includes('iPhone')) return 'iPhone';
@@ -286,37 +334,25 @@
         updateDeviceInfo();
         setInterval(updateDeviceInfo, 30000);
 
-        const SESSION_ID = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-        const username = user.username || 'guest';
-        const role = user.role || 'buyer';
-
-        const userRef = ref(db, 'online/' + SESSION_ID);
-        set(userRef, {
-            username: username,
-            role: role,
-            timestamp: serverTimestamp()
-        });
-        onDisconnect(userRef).remove();
-
-        const onlineRef = ref(db, 'online');
-        onValue(onlineRef, (snapshot) => {
-            const data = snapshot.val();
-            const onlineCount = data ? Object.keys(data).length : 0;
-            document.getElementById('onlineUsers').textContent = onlineCount;
-            document.getElementById('activeConnections').textContent = onlineCount + 1;
-        });
-
-        document.getElementById('expirationDate').textContent = '99999-09-9';
-
+        // ===== TOGGLE SIDE MENU =====
         window.toggleSideMenu = function() {
             document.getElementById('sideMenu').classList.toggle('active');
         };
 
-        window.logout = function() {
-            localStorage.removeItem('user');
-            window.location.href = 'index.html';
+        // ===== LOGOUT =====
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            }
         };
 
+        // ===== VIDEO TIDAK BISA DI-PAUSE =====
         const video = document.getElementById('dashVideo');
         video.addEventListener('pause', function() { video.play(); });
         video.addEventListener('click', function(e) { e.preventDefault(); video.play(); });
