@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - CESARXRAT</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .error-msg {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        .success-msg {
+            color: #4ae0a0;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -12,26 +32,93 @@
             <h1>CESARXRAT</h1>
             <h2 style="font-size:20px;margin:10px 0 20px;">REGISTER</h2>
             <form id="registerForm">
-                <input type="email" id="regEmail" placeholder="Email" required>
-                <input type="text" id="regUsername" placeholder="Username" required>
-                <input type="password" id="regPassword" placeholder="Password" required>
-                <input type="password" id="regConfirm" placeholder="Confirm Password" required>
-                <button type="submit" class="btn-primary">DAFTAR</button>
+                <input type="email" id="regEmail" placeholder="Email" required autocomplete="email">
+                <input type="text" id="regUsername" placeholder="Username" required autocomplete="username">
+                <input type="password" id="regPassword" placeholder="Password (min 6 karakter)" required minlength="6" autocomplete="new-password">
+                <input type="password" id="regConfirm" placeholder="Confirm Password" required minlength="6" autocomplete="new-password">
+                <button type="submit" class="btn-primary" id="btnRegister">DAFTAR</button>
             </form>
-            <p style="text-align:center;margin-top:18px;color:#8899dd;">Sudah punya akun? <a href="login.html" class="link">MASUK</a></p>
+            <div id="message" class="error-msg"></div>
+            <p style="text-align:center;margin-top:18px;color:#8899dd;">
+                Sudah punya akun? <a href="login.html" class="link">MASUK</a>
+            </p>
         </div>
     </div>
-    <script>
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
+
+    <script type="module">
+        import { auth, createUserWithEmailAndPassword, updateProfile, db, ref, set }
+            from './firebase-config.js';
+
+        const registerForm = document.getElementById('registerForm');
+        const btnRegister = document.getElementById('btnRegister');
+        const message = document.getElementById('message');
+
+        registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const pass = document.getElementById('regPassword').value;
+
+            const email = document.getElementById('regEmail').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
             const confirm = document.getElementById('regConfirm').value;
-            if(pass !== confirm) {
-                alert('Password tidak cocok!');
+
+            message.textContent = '';
+            message.className = 'error-msg';
+
+            if (password !== confirm) {
+                message.textContent = '❌ Password tidak cocok!';
                 return;
             }
-            alert('Registrasi berhasil! Silakan login.');
-            window.location.href = 'login.html';
+
+            if (password.length < 6) {
+                message.textContent = '❌ Password minimal 6 karakter!';
+                return;
+            }
+
+            if (username.length < 3) {
+                message.textContent = '❌ Username minimal 3 karakter!';
+                return;
+            }
+
+            btnRegister.disabled = true;
+            btnRegister.textContent = 'MEMPROSES...';
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                await updateProfile(user, { displayName: username });
+
+                const expiredDate = new Date();
+                expiredDate.setDate(expiredDate.getDate() + 7);
+                const expirationStr = expiredDate.toISOString().split('T')[0];
+
+                await set(ref(db, 'users/' + user.uid), {
+                    uid: user.uid,
+                    email: email,
+                    username: username,
+                    role: 'buyer',
+                    expiration: expirationStr,
+                    createdAt: Date.now()
+                });
+
+                message.className = 'success-msg';
+                message.textContent = '✅ Registrasi berhasil! Silakan login.';
+                btnRegister.textContent = 'BERHASIL';
+
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+
+            } catch (error) {
+                let errMsg = 'Registrasi gagal!';
+                if (error.code === 'auth/email-already-in-use') errMsg = 'Email sudah terdaftar!';
+                else if (error.code === 'auth/invalid-email') errMsg = 'Format email tidak valid!';
+                else if (error.code === 'auth/weak-password') errMsg = 'Password terlalu lemah!';
+
+                message.textContent = '❌ ' + errMsg;
+                btnRegister.disabled = false;
+                btnRegister.textContent = 'DAFTAR';
+            }
         });
     </script>
 </body>
