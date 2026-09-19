@@ -112,7 +112,7 @@
         .dash-actions .btn-primary {
             flex: 1; padding: 14px; border: none; border-radius: 50px;
             background: linear-gradient(135deg, #4a9eff, #1a5bbf);
-            color: #fff; font-size: 16px; font-weight: bold;
+            color: #fff; font-size: 15px; font-weight: bold;
             cursor: pointer; transition: 0.3s;
             box-shadow: 0 6px 20px rgba(74, 158, 255, 0.25);
             text-align: center;
@@ -137,6 +137,7 @@
             .welcome-card .greeting { font-size: 18px; }
             .info-item .value { font-size: 13px; }
             .stat-box .number { font-size: 20px; }
+            .dash-actions .btn-primary { font-size: 13px; padding: 12px 8px; }
         }
     </style>
 </head>
@@ -201,12 +202,14 @@
         </div>
 
         <div class="dash-actions">
-            <button class="btn-primary" onclick="location.href='rat-control.html'">🔘 RAT Control</button>
             <button class="btn-primary" onclick="location.href='device-target.html'">📱 Device Target</button>
+            <button class="btn-primary" onclick="location.href='pairing.html'">🔗 Pairing</button>
         </div>
 
         <div id="sideMenu" class="side-menu">
             <div class="close-btn" onclick="toggleSideMenu()">✕</div>
+            <div class="menu-item" onclick="location.href='pairing.html'">🔗 Pairing Code</div>
+            <div class="menu-item" onclick="location.href='device-target.html'">📱 Device Target</div>
             <div class="menu-item" onclick="location.href='settings.html'">⚙️ Setting Akun</div>
             <div class="menu-item" onclick="location.href='global-chat.html'">💬 Global Chat</div>
             <div class="menu-item" onclick="location.href='info.html'">ℹ️ Informasi</div>
@@ -227,7 +230,6 @@
                 return;
             }
 
-            // Ambil data user dari database
             const snapshot = await get(child(ref(db), 'users/' + user.uid));
             let username = user.displayName || 'User';
             let role = 'buyer';
@@ -245,7 +247,6 @@
             document.getElementById('roleBadge').textContent = role.toUpperCase();
             document.getElementById('expirationDate').textContent = expiration;
 
-            // Simpan ke localStorage untuk fallback
             localStorage.setItem('user', JSON.stringify({
                 uid: user.uid,
                 email: user.email,
