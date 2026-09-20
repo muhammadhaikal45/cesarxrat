@@ -56,9 +56,11 @@
             margin: 16px 0;
             display: none;
         }
-        .qr-box img {
-            max-width: 100%;
-            height: auto;
+        .qr-box #qrcode {
+            display: inline-block;
+        }
+        .qr-box #qrcode img,
+        .qr-box #qrcode canvas {
             display: block;
             margin: 0 auto;
         }
@@ -169,7 +171,7 @@
             </button>
 
             <div class="qr-box" id="qrBox">
-                <img id="qrImage" src="" alt="QR Code">
+                <div id="qrcode"></div>
             </div>
 
             <div class="qr-info" id="qrInfo">
@@ -195,10 +197,8 @@
 
     <div class="toast" id="toast"></div>
 
-    <!-- Load library qrcode.js -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="qrcode.min.js"></script>
 
-    <!-- Firebase Module -->
     <script type="module">
         import { auth, onAuthStateChanged, db, ref, set }
             from './firebase-config.js';
@@ -213,7 +213,6 @@
             setTimeout(() => toastEl.classList.remove('show'), 2500);
         }
 
-        // ===== AUTH =====
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'login.html';
@@ -222,7 +221,6 @@
             currentUid = user.uid;
         });
 
-        // ===== GENERATE TOKEN =====
         function generateToken() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
             let token = '';
@@ -232,7 +230,6 @@
             return token;
         }
 
-        // ===== GENERATE QR =====
         async function generateQR() {
             if (!currentUid) {
                 showToast('❌ Silakan login dulu');
@@ -240,7 +237,7 @@
             }
 
             if (typeof QRCode === 'undefined') {
-                showToast('⏳ Library belum siap, coba lagi');
+                showToast('❌ Library QR tidak ditemukan');
                 return;
             }
 
@@ -254,7 +251,6 @@
 
                 const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
 
-                // Simpan token ke Firebase
                 const tokenRef = ref(db, 'pairing_tokens/' + token);
                 await set(tokenRef, {
                     uid: currentUid,
@@ -266,18 +262,18 @@
 
                 const qrData = 'CESARXRAT|uid=' + currentUid + '|token=' + token;
 
-                // Generate QR jadi data URL
-                const qrDataUrl = await QRCode.toDataURL(qrData, {
-                    width: 400,
-                    margin: 2,
-                    errorCorrectionLevel: 'M',
-                    color: {
-                        dark: '#0a0e27',
-                        light: '#ffffff'
-                    }
+                const qrContainer = document.getElementById('qrcode');
+                qrContainer.innerHTML = '';
+
+                new QRCode(qrContainer, {
+                    text: qrData,
+                    width: 300,
+                    height: 300,
+                    colorDark: '#0a0e27',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
                 });
 
-                document.getElementById('qrImage').src = qrDataUrl;
                 document.getElementById('qrBox').style.display = 'block';
                 document.getElementById('qrInfo').style.display = 'block';
                 document.getElementById('tokenText').textContent = token;
@@ -294,23 +290,31 @@
             }
         }
 
-        // ===== SHARE QR =====
         async function shareQR() {
             if (!currentToken) {
                 showToast('❌ Generate QR dulu');
                 return;
             }
 
-            const qrImg = document.getElementById('qrImage');
-            const qrDataUrl = qrImg.src;
+            const qrContainer = document.getElementById('qrcode');
+            const imgEl = qrContainer.querySelector('img');
+            const canvasEl = qrContainer.querySelector('canvas');
 
-            if (!qrDataUrl || qrDataUrl.length < 100) {
+            let dataUrl = '';
+
+            if (canvasEl) {
+                dataUrl = canvasEl.toDataURL('image/png');
+            } else if (imgEl) {
+                dataUrl = imgEl.src;
+            }
+
+            if (!dataUrl || dataUrl.length < 100) {
                 showToast('❌ QR belum siap');
                 return;
             }
 
             try {
-                const response = await fetch(qrDataUrl);
+                const response = await fetch(dataUrl);
                 const blob = await response.blob();
                 const file = new File([blob], 'cesarxrat-qr.png', { type: 'image/png' });
 
@@ -322,7 +326,7 @@
                     });
                 } else {
                     const link = document.createElement('a');
-                    link.href = qrDataUrl;
+                    link.href = dataUrl;
                     link.download = 'cesarxrat-qr.png';
                     document.body.appendChild(link);
                     link.click();
@@ -336,7 +340,6 @@
             }
         }
 
-        // ===== BIND EVENT SETELAH DOM SIAP =====
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('btnGenerate').addEventListener('click', generateQR);
             document.getElementById('btnShare').addEventListener('click', shareQR);
