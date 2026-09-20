@@ -21,8 +21,7 @@
         }
         h1 {
             font-size: 26px; color: #4a9eff; margin: 0;
-            font-weight: 800; letter-spacing: 1px;
-            text-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
+            font-weight: 800;
         }
         .btn-qr-top {
             background: linear-gradient(135deg, #4ae0a0, #1a8f5f);
@@ -33,52 +32,47 @@
             font-size: 13px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(74, 224, 160, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
-        .btn-qr-top:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(74, 224, 160, 0.5);
+        .debug-info {
+            background: #1a1a3a;
+            border: 1px solid #4a9eff;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #8899dd;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            line-height: 1.6;
         }
+        .debug-info .label { color: #4a9eff; font-weight: bold; }
+        .debug-info .error { color: #ff6b6b; font-weight: bold; }
+        .debug-info .ok { color: #4ae0a0; font-weight: bold; }
+        .debug-info .warn { color: #ffb84a; font-weight: bold; }
+
         .device-item {
             background: #111a3a;
             border-radius: 16px;
             padding: 16px 18px;
             margin: 12px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             border-left: 6px solid #4a9eff;
             border-top: 1px solid #2a4a8a;
             border-right: 1px solid #2a4a8a;
             border-bottom: 1px solid #2a4a8a;
-            transition: 0.2s;
         }
-        .device-item:hover {
-            border-color: #4a9eff;
-            box-shadow: 0 0 20px rgba(74, 158, 255, 0.2);
+        .device-item.offline { border-left-color: #ff6b6b; }
+        .device-item .name { font-weight: bold; color: #fff; font-size: 16px; }
+        .device-item .os { font-size: 12px; color: #6a8abf; margin-top: 2px; }
+        .device-item .status { font-size: 13px; margin-top: 4px; }
+        .device-item .owner {
+            font-size: 10px; color: #555;
+            margin-top: 4px; font-family: monospace;
         }
-        .device-item.offline {
-            border-left-color: #555;
-            opacity: 0.7;
-        }
-        .device-item .info { flex: 1; }
-        .device-item .info .name {
-            font-weight: bold; color: #fff; font-size: 16px;
-        }
-        .device-item .info .status {
-            font-size: 13px; margin-top: 4px;
-        }
-        .device-item .info .os {
-            font-size: 12px; color: #6a8abf; margin-top: 2px;
-        }
-        .status-online { color: #4ae0a0; }
-        .status-offline { color: #ff6b6b; }
-        .device-item .actions {
-            display: flex; align-items: center; gap: 10px;
+        .device-item .controls {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .btn-control {
             background: linear-gradient(135deg, #4a9eff, #1a5bbf);
@@ -89,38 +83,28 @@
             font-weight: bold;
             font-size: 13px;
             cursor: pointer;
-            transition: 0.3s;
-        }
-        .btn-control:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(74, 158, 255, 0.4);
         }
         .btn-control:disabled {
             background: #2a4a8a;
-            cursor: not-allowed;
             opacity: 0.5;
+            cursor: not-allowed;
         }
+        .status-online { color: #4ae0a0; font-weight: bold; }
+        .status-offline { color: #ff6b6b; font-weight: bold; }
+
         .empty-state {
             text-align: center; color: #6a8abf;
-            padding: 40px 20px; font-style: italic;
+            padding: 40px 20px;
             background: #111a3a; border-radius: 16px;
             border: 1px dashed #2a4a8a;
-        }
-        .empty-state .icon {
-            font-size: 48px; display: block; margin-bottom: 10px;
         }
         .btn-back {
             background: transparent; border: 2px solid #4a9eff;
             color: #4a9eff; padding: 12px 24px;
             border-radius: 50px; font-weight: bold;
-            cursor: pointer; transition: 0.3s;
+            cursor: pointer;
             width: 100%; margin-top: 24px;
             text-align: center; font-size: 16px;
-        }
-        .btn-back:hover { background: #4a9eff; color: #fff; }
-        .refresh-info {
-            text-align: center; font-size: 11px;
-            color: #6a8abf; margin-top: 10px;
         }
     </style>
 </head>
@@ -134,119 +118,162 @@
             </button>
         </div>
 
+        <div class="debug-info" id="debugInfo">
+            <div><span class="label">Status:</span> <span id="statusText" class="warn">Initializing...</span></div>
+            <div><span class="label">UID Anda:</span> <span id="myUid">-</span></div>
+            <div><span class="label">Total Device:</span> <span id="totalDevice">0</span></div>
+            <div><span class="label">Milik Anda:</span> <span id="myDevice">0</span></div>
+            <div><span class="label">Error:</span> <span id="errorText" class="error">-</span></div>
+        </div>
+
         <div id="deviceList">
             <div class="empty-state">
-                <span class="icon">📱</span>
-                Memuat daftar perangkat...
+                📱 Memuat daftar perangkat...
             </div>
         </div>
 
         <button class="btn-back" onclick="history.back()">Kembali</button>
-        <div class="refresh-info">🔄 Update real-time dari Firebase</div>
     </div>
 
     <script type="module">
         import { auth, onAuthStateChanged, db, ref, onValue } from './firebase-config.js';
 
         const listEl = document.getElementById('deviceList');
-        const TIMEOUT_MS = 30000;
+        const statusEl = document.getElementById('statusText');
+        const errorEl = document.getElementById('errorText');
+        const TIMEOUT_MS = 60000;
         let currentUid = null;
+
+        function setStatus(text, cls) {
+            statusEl.textContent = text;
+            statusEl.className = cls || '';
+        }
+        function setError(text) {
+            errorEl.textContent = text;
+        }
+
+        setStatus('Menunggu login...', 'warn');
 
         onAuthStateChanged(auth, (user) => {
             if (!user) {
-                window.location.href = 'login.html';
+                setStatus('❌ Tidak ada user login', 'error');
+                setTimeout(() => window.location.href = 'login.html', 1500);
                 return;
             }
             currentUid = user.uid;
+            document.getElementById('myUid').textContent = currentUid;
+            setStatus('✅ Login OK', 'ok');
             loadDevices();
         });
 
         function loadDevices() {
             if (!currentUid) return;
 
-            const targetsRef = ref(db, 'targets');
-            onValue(targetsRef, (snapshot) => {
-                const data = snapshot.val();
-                const now = Date.now();
-                let html = '';
-                let count = 0;
+            setStatus('⏳ Connect Firebase...', 'warn');
 
-                if (data && Object.keys(data).length > 0) {
-                    for (const key in data) {
-                        const target = data[key];
-                        if (!target || !target.name) continue;
+            try {
+                const targetsRef = ref(db, 'targets');
 
-                        // FILTER: hanya device milik user ini
-                        if (target.owner_uid !== currentUid) continue;
+                onValue(targetsRef,
+                    (snapshot) => {
+                        setStatus('✅ Firebase OK', 'ok');
+                        setError('-');
 
-                        let isOnline = false;
-                        if (target.timestamp) {
-                            const diff = now - target.timestamp;
-                            isOnline = diff < TIMEOUT_MS && target.status === 'online';
+                        const data = snapshot.val();
+                        const now = Date.now();
+                        let html = '';
+                        let totalCount = 0;
+                        let myCount = 0;
+
+                        if (data && Object.keys(data).length > 0) {
+                            for (const key in data) {
+                                const target = data[key];
+                                if (!target || !target.name) continue;
+
+                                totalCount++;
+                                const isMine = target.owner_uid === currentUid;
+                                if (isMine) myCount++;
+
+                                let isOnline = false;
+                                if (target.timestamp) {
+                                    const diff = now - target.timestamp;
+                                    isOnline = diff < TIMEOUT_MS;
+                                }
+
+                                const statusClass = isOnline ? 'status-online' : 'status-offline';
+                                const statusText = isOnline ? '● Online' : '● Offline';
+
+                                const ownerTag = isMine
+                                    ? '<span style="color:#4ae0a0;font-weight:bold;">[MILIK ANDA]</span>'
+                                    : '<span style="color:#ff6b6b;">[DEVICE LAIN]</span>';
+
+                                html += `
+                                    <div class="device-item">
+                                        <div class="name">${ownerTag} ${escapeHtml(target.name)}</div>
+                                        <div class="os">${escapeHtml(target.os || '- - -')}</div>
+                                        <div class="status ${statusClass}">${statusText}</div>
+                                        <div class="owner">owner: ${escapeHtml(target.owner_uid || '-')}</div>
+                                        <div class="controls">
+                                            <button class="btn-control"
+                                                data-target="${key}"
+                                                data-mine="${isMine}"
+                                                ${isMine ? '' : 'disabled'}>
+                                                🔘 KONTROL
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }
                         }
 
-                        const statusClass = isOnline ? 'status-online' : 'status-offline';
-                        const statusText = isOnline ? '● Online' : '● Offline';
-                        const itemClass = isOnline ? '' : 'offline';
-                        const disabledAttr = isOnline ? '' : 'disabled';
+                        document.getElementById('totalDevice').textContent = totalCount;
+                        document.getElementById('myDevice').textContent = myCount;
 
-                        html += `
-                            <div class="device-item ${itemClass}">
-                                <div class="info">
-                                    <div class="name">${escapeHtml(target.name)}</div>
-                                    <div class="os">${escapeHtml(target.os || '- - -')}</div>
-                                    <div class="status ${statusClass}">${statusText}</div>
+                        if (totalCount === 0) {
+                            listEl.innerHTML = `
+                                <div class="empty-state">
+                                    📱 Firebase terhubung, tapi KOSONG.<br><br>
+                                    Belum ada perangkat target.
                                 </div>
-                                <div class="actions">
-                                    <button class="btn-control" ${disabledAttr}
-                                        data-target="${key}"
-                                        data-online="${isOnline}">
-                                        KONTROL
-                                    </button>
-                                </div>
+                            `;
+                        } else {
+                            listEl.innerHTML = html;
+                            document.querySelectorAll('.btn-control').forEach(function(btn) {
+                                btn.addEventListener('click', function() {
+                                    const targetId = this.dataset.target;
+                                    const isMine = this.dataset.mine === 'true';
+                                    if (!isMine) {
+                                        alert('❌ Device ini bukan milik Anda');
+                                        return;
+                                    }
+                                    window.location.href = 'rat-control.html?target=' + targetId;
+                                });
+                            });
+                        }
+                    },
+                    (error) => {
+                        setStatus('❌ ERROR Firebase', 'error');
+                        setError(error.message || 'Unknown error');
+                        listEl.innerHTML = `
+                            <div class="empty-state">
+                                ❌ Gagal connect ke Firebase<br><br>
+                                <span style="color:#ff6b6b;">${escapeHtml(error.message)}</span><br><br>
+                                Cek rules Firebase.
                             </div>
                         `;
-                        count++;
                     }
-                }
-
-                if (count === 0) {
-                    listEl.innerHTML = `
-                        <div class="empty-state">
-                            <span class="icon">📱</span>
-                            Belum ada perangkat target.<br><br>
-                            Klik <b>QR Pairing</b> di atas<br>
-                            untuk menghubungkan device baru.
-                        </div>
-                    `;
-                } else {
-                    listEl.innerHTML = html;
-
-                    document.querySelectorAll('.btn-control').forEach(function(btn) {
-                        btn.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            const targetId = this.dataset.target;
-                            const isOnline = this.dataset.online === 'true';
-
-                            if (!isOnline) {
-                                alert('❌ Target sedang offline.');
-                                return;
-                            }
-
-                            window.location.href = 'rat-control.html?target=' + targetId;
-                        });
-                    });
-                }
-            });
+                );
+            } catch (e) {
+                setStatus('❌ Error di kode', 'error');
+                setError(e.message);
+            }
         }
 
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = text || '';
             return div.innerHTML;
         }
-
-        console.log('[CESARXRAT] Device Target real-time aktif');
     </script>
 </body>
 </html>
