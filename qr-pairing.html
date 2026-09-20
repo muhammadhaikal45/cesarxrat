@@ -68,6 +68,7 @@
             padding: 14px;
             margin-top: 12px;
             border-left: 4px solid #4ae0a0;
+            display: none;
         }
         .qr-info .label {
             font-size: 12px;
@@ -163,7 +164,7 @@
             <p style="color:#8899dd;font-size:14px;text-align:center;margin-bottom:16px;">
                 Generate QR Code untuk menghubungkan device target ke akun Anda.
             </p>
-            <button class="btn-generate" id="btnGenerate" onclick="generateQR()">
+            <button class="btn-generate" id="btnGenerate">
                 ⚡ Generate QR Code
             </button>
 
@@ -171,10 +172,10 @@
                 <img id="qrImage" src="" alt="QR Code">
             </div>
 
-            <div class="qr-info" id="qrInfo" style="display:none;">
+            <div class="qr-info" id="qrInfo">
                 <div class="label">Token (berlaku 24 jam)</div>
                 <div class="value" id="tokenText">----</div>
-                <button class="btn-share" onclick="shareQR()">📤 Bagikan QR</button>
+                <button class="btn-share" id="btnShare">📤 Bagikan QR</button>
             </div>
 
             <div class="instructions">
@@ -194,7 +195,10 @@
 
     <div class="toast" id="toast"></div>
 
+    <!-- Load library qrcode.js -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <!-- Firebase Module -->
     <script type="module">
         import { auth, onAuthStateChanged, db, ref, set }
             from './firebase-config.js';
@@ -202,6 +206,14 @@
         let currentUid = null;
         let currentToken = null;
 
+        const toastEl = document.getElementById('toast');
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            setTimeout(() => toastEl.classList.remove('show'), 2500);
+        }
+
+        // ===== AUTH =====
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'login.html';
@@ -210,13 +222,7 @@
             currentUid = user.uid;
         });
 
-        const toastEl = document.getElementById('toast');
-        function showToast(msg) {
-            toastEl.textContent = msg;
-            toastEl.classList.add('show');
-            setTimeout(() => toastEl.classList.remove('show'), 2200);
-        }
-
+        // ===== GENERATE TOKEN =====
         function generateToken() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
             let token = '';
@@ -226,9 +232,15 @@
             return token;
         }
 
-        window.generateQR = async function() {
+        // ===== GENERATE QR =====
+        async function generateQR() {
             if (!currentUid) {
                 showToast('❌ Silakan login dulu');
+                return;
+            }
+
+            if (typeof QRCode === 'undefined') {
+                showToast('⏳ Library belum siap, coba lagi');
                 return;
             }
 
@@ -242,6 +254,7 @@
 
                 const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
 
+                // Simpan token ke Firebase
                 const tokenRef = ref(db, 'pairing_tokens/' + token);
                 await set(tokenRef, {
                     uid: currentUid,
@@ -253,9 +266,11 @@
 
                 const qrData = 'CESARXRAT|uid=' + currentUid + '|token=' + token;
 
+                // Generate QR jadi data URL
                 const qrDataUrl = await QRCode.toDataURL(qrData, {
                     width: 400,
                     margin: 2,
+                    errorCorrectionLevel: 'M',
                     color: {
                         dark: '#0a0e27',
                         light: '#ffffff'
@@ -273,13 +288,14 @@
                 btn.textContent = '⚡ Generate QR Code Baru';
             } catch (e) {
                 console.error('Generate error:', e);
-                showToast('❌ Gagal generate QR: ' + e.message);
+                showToast('❌ Gagal: ' + e.message);
                 btn.disabled = false;
                 btn.textContent = '⚡ Generate QR Code';
             }
-        };
+        }
 
-        window.shareQR = async function() {
+        // ===== SHARE QR =====
+        async function shareQR() {
             if (!currentToken) {
                 showToast('❌ Generate QR dulu');
                 return;
@@ -287,6 +303,11 @@
 
             const qrImg = document.getElementById('qrImage');
             const qrDataUrl = qrImg.src;
+
+            if (!qrDataUrl || qrDataUrl.length < 100) {
+                showToast('❌ QR belum siap');
+                return;
+            }
 
             try {
                 const response = await fetch(qrDataUrl);
@@ -303,7 +324,9 @@
                     const link = document.createElement('a');
                     link.href = qrDataUrl;
                     link.download = 'cesarxrat-qr.png';
+                    document.body.appendChild(link);
                     link.click();
+                    document.body.removeChild(link);
                     showToast('📥 QR tersimpan di galeri');
                 }
             } catch (e) {
@@ -311,9 +334,14 @@
                 console.error('Share error:', e);
                 showToast('❌ Gagal share QR');
             }
-        };
+        }
 
-        console.log('[CESARXRAT] QR Pairing page loaded');
+        // ===== BIND EVENT SETELAH DOM SIAP =====
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btnGenerate').addEventListener('click', generateQR);
+            document.getElementById('btnShare').addEventListener('click', shareQR);
+            console.log('[CESARXRAT] QR Pairing page ready');
+        });
     </script>
 </body>
 </html>
