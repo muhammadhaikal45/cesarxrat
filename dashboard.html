@@ -352,7 +352,7 @@
 
         // ===== VIDEO TIDAK BISA DI-PAUSE =====
         const video = document.getElementById('dashVideo');
-        video.addEventListener('pause', function() { video.pause(); });
+        video.addEventListener('pause', function() { video.play(); });
         video.addEventListener('click', function(e) { e.preventDefault(); video.play(); });
         video.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
