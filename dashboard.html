@@ -227,23 +227,32 @@
                 return;
             }
 
-            const snapshot = await get(child(ref(db), 'users/' + user.uid));
-            let username = user.displayName || 'User';
+            let username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
             let role = 'buyer';
             let expiration = 'Tidak ada';
 
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                username = data.username || username;
-                role = data.role || role;
-                expiration = data.expiration || expiration;
+            try {
+                const snapshot = await get(child(ref(db), 'users/' + user.uid));
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    username = data.username || username;
+                    role = data.role || role;
+                    expiration = data.expiration || expiration;
+                }
+            } catch (e) {
+                console.error('Error read users:', e);
+                // Fallback: pakai email
+                username = user.email ? user.email.split('@')[0] : 'User';
+                expiration = 'Aktif';
             }
 
+            // Update UI (selalu dijalankan walaupun error)
             document.getElementById('userName').textContent = username;
             document.getElementById('userRole').textContent = role.toUpperCase();
             document.getElementById('roleBadge').textContent = role.toUpperCase();
             document.getElementById('expirationDate').textContent = expiration;
 
+            // Simpan ke localStorage
             localStorage.setItem('user', JSON.stringify({
                 uid: user.uid,
                 email: user.email,
@@ -252,22 +261,31 @@
             }));
 
             // ===== ONLINE STATUS =====
-            const SESSION_ID = 'session_' + user.uid + '_' + Date.now();
-            const userRef = ref(db, 'online/' + SESSION_ID);
-            set(userRef, {
-                username: username,
-                role: role,
-                timestamp: serverTimestamp()
-            });
-            onDisconnect(userRef).remove();
+            try {
+                const SESSION_ID = 'session_' + user.uid + '_' + Date.now();
+                const userRef = ref(db, 'online/' + SESSION_ID);
+                set(userRef, {
+                    username: username,
+                    role: role,
+                    timestamp: serverTimestamp()
+                });
+                onDisconnect(userRef).remove();
+            } catch (e) {
+                console.error('Error set online:', e);
+            }
 
-            const onlineRef = ref(db, 'online');
-            onValue(onlineRef, (snap) => {
-                const data = snap.val();
-                const onlineCount = data ? Object.keys(data).length : 0;
-                document.getElementById('onlineUsers').textContent = onlineCount;
-                document.getElementById('activeConnections').textContent = onlineCount;
-            });
+            // ===== COUNT ONLINE USERS =====
+            try {
+                const onlineRef = ref(db, 'online');
+                onValue(onlineRef, (snap) => {
+                    const data = snap.val();
+                    const onlineCount = data ? Object.keys(data).length : 0;
+                    document.getElementById('onlineUsers').textContent = onlineCount;
+                    document.getElementById('activeConnections').textContent = onlineCount;
+                });
+            } catch (e) {
+                console.error('Error read online:', e);
+            }
         });
 
         // ===== DEVICE INFO =====
@@ -352,9 +370,11 @@
 
         // ===== VIDEO TIDAK BISA DI-PAUSE =====
         const video = document.getElementById('dashVideo');
-        video.addEventListener('pause', function() { video.play(); });
-        video.addEventListener('click', function(e) { e.preventDefault(); video.play(); });
-        video.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        if (video) {
+            video.addEventListener('pause', function() { video.play(); });
+            video.addEventListener('click', function(e) { e.preventDefault(); video.play(); });
+            video.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        }
 
         console.log('[CESARXRAT] Dashboard real-time aktif');
     </script>
