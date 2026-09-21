@@ -220,7 +220,6 @@
                  db, ref, get, child, onValue, set, onDisconnect, serverTimestamp }
             from './firebase-config.js';
 
-        // ===== AUTO-LOGIN + AMBIL DATA USER =====
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = 'login.html';
@@ -229,7 +228,7 @@
 
             let username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
             let role = 'buyer';
-            let expiration = 'Tidak ada';
+            let expiration = 'Aktif';
 
             try {
                 const snapshot = await get(child(ref(db), 'users/' + user.uid));
@@ -241,18 +240,13 @@
                 }
             } catch (e) {
                 console.error('Error read users:', e);
-                // Fallback: pakai email
-                username = user.email ? user.email.split('@')[0] : 'User';
-                expiration = 'Aktif';
             }
 
-            // Update UI (selalu dijalankan walaupun error)
             document.getElementById('userName').textContent = username;
             document.getElementById('userRole').textContent = role.toUpperCase();
             document.getElementById('roleBadge').textContent = role.toUpperCase();
             document.getElementById('expirationDate').textContent = expiration;
 
-            // Simpan ke localStorage
             localStorage.setItem('user', JSON.stringify({
                 uid: user.uid,
                 email: user.email,
@@ -260,7 +254,6 @@
                 role: role
             }));
 
-            // ===== ONLINE STATUS =====
             try {
                 const SESSION_ID = 'session_' + user.uid + '_' + Date.now();
                 const userRef = ref(db, 'online/' + SESSION_ID);
@@ -274,21 +267,15 @@
                 console.error('Error set online:', e);
             }
 
-            // ===== COUNT ONLINE USERS =====
-            try {
-                const onlineRef = ref(db, 'online');
-                onValue(onlineRef, (snap) => {
-                    const data = snap.val();
-                    const onlineCount = data ? Object.keys(data).length : 0;
-                    document.getElementById('onlineUsers').textContent = onlineCount;
-                    document.getElementById('activeConnections').textContent = onlineCount;
-                });
-            } catch (e) {
-                console.error('Error read online:', e);
-            }
+            const onlineRef = ref(db, 'online');
+            onValue(onlineRef, (snap) => {
+                const data = snap.val();
+                const onlineCount = data ? Object.keys(data).length : 0;
+                document.getElementById('onlineUsers').textContent = onlineCount;
+                document.getElementById('activeConnections').textContent = onlineCount;
+            });
         });
 
-        // ===== DEVICE INFO =====
         function getDeviceName() {
             const ua = navigator.userAgent;
             if (ua.includes('iPhone')) return 'iPhone';
@@ -350,12 +337,10 @@
         updateDeviceInfo();
         setInterval(updateDeviceInfo, 30000);
 
-        // ===== TOGGLE SIDE MENU =====
         window.toggleSideMenu = function() {
             document.getElementById('sideMenu').classList.toggle('active');
         };
 
-        // ===== LOGOUT =====
         window.logout = async function() {
             try {
                 await signOut(auth);
@@ -368,7 +353,6 @@
             }
         };
 
-        // ===== VIDEO TIDAK BISA DI-PAUSE =====
         const video = document.getElementById('dashVideo');
         if (video) {
             video.addEventListener('pause', function() { video.play(); });
