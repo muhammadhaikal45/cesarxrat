@@ -278,7 +278,7 @@
 
             const now = Date.now();
             const diff = target.timestamp ? (now - target.timestamp) : 999999;
-            const isOnline = diff < 30000 && target.status === 'online';
+            const isOnline = diff < 60000;
             currentTargetOnline = isOnline;
 
             if (isOnline) {
