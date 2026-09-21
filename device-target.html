@@ -137,7 +137,7 @@
                     let isOnline = false;
                     if (target.timestamp) {
                         const diff = now - target.timestamp;
-                        isOnline = diff < TIMEOUT_MS && target.status === 'online';
+                        isOnline = diff < TIMEOUT_MS;
                     }
 
                     const statusClass = isOnline ? 'status-online' : 'status-offline';
