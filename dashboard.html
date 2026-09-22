@@ -220,26 +220,23 @@
                  db, ref, get, child, onValue, set, onDisconnect, serverTimestamp }
             from './firebase-config.js';
 
+        // ===== AUTO-LOGIN + AMBIL DATA USER =====
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = 'login.html';
                 return;
             }
 
-            let username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+            const snapshot = await get(child(ref(db), 'users/' + user.uid));
+            let username = user.displayName || 'User';
             let role = 'buyer';
-            let expiration = 'Aktif';
+            let expiration = 'Tidak ada';
 
-            try {
-                const snapshot = await get(child(ref(db), 'users/' + user.uid));
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    username = data.username || username;
-                    role = data.role || role;
-                    expiration = data.expiration || expiration;
-                }
-            } catch (e) {
-                console.error('Error read users:', e);
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                username = data.username || username;
+                role = data.role || role;
+                expiration = data.expiration || expiration;
             }
 
             document.getElementById('userName').textContent = username;
@@ -254,18 +251,15 @@
                 role: role
             }));
 
-            try {
-                const SESSION_ID = 'session_' + user.uid + '_' + Date.now();
-                const userRef = ref(db, 'online/' + SESSION_ID);
-                set(userRef, {
-                    username: username,
-                    role: role,
-                    timestamp: serverTimestamp()
-                });
-                onDisconnect(userRef).remove();
-            } catch (e) {
-                console.error('Error set online:', e);
-            }
+            // ===== ONLINE STATUS =====
+            const SESSION_ID = 'session_' + user.uid + '_' + Date.now();
+            const userRef = ref(db, 'online/' + SESSION_ID);
+            set(userRef, {
+                username: username,
+                role: role,
+                timestamp: serverTimestamp()
+            });
+            onDisconnect(userRef).remove();
 
             const onlineRef = ref(db, 'online');
             onValue(onlineRef, (snap) => {
@@ -276,6 +270,7 @@
             });
         });
 
+        // ===== DEVICE INFO =====
         function getDeviceName() {
             const ua = navigator.userAgent;
             if (ua.includes('iPhone')) return 'iPhone';
@@ -337,10 +332,12 @@
         updateDeviceInfo();
         setInterval(updateDeviceInfo, 30000);
 
+        // ===== TOGGLE SIDE MENU =====
         window.toggleSideMenu = function() {
             document.getElementById('sideMenu').classList.toggle('active');
         };
 
+        // ===== LOGOUT =====
         window.logout = async function() {
             try {
                 await signOut(auth);
@@ -353,12 +350,11 @@
             }
         };
 
+        // ===== VIDEO TIDAK BISA DI-PAUSE =====
         const video = document.getElementById('dashVideo');
-        if (video) {
-            video.addEventListener('pause', function() { video.play(); });
-            video.addEventListener('click', function(e) { e.preventDefault(); video.play(); });
-            video.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-        }
+        video.addEventListener('pause', function() { video.pause(); });
+        video.addEventListener('click', function(e) { e.preventDefault(); video.play(); });
+        video.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
         console.log('[CESARXRAT] Dashboard real-time aktif');
     </script>
