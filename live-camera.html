@@ -103,7 +103,6 @@
             100% { opacity: 1; transform: scale(1); }
         }
 
-        /* ===== CAMERA VIEW PAKAI CANVAS ===== */
         #cameraCanvas {
             position: fixed;
             top: 0;
@@ -340,6 +339,11 @@
                     // Rotate 90 derajat (portrait)
                     ctx.rotate(Math.PI / 2);
 
+                    // MIRROR kalau kamera depan (biar wajah tidak terbalik)
+                    if (currentCamera === 'front') {
+                        ctx.scale(-1, 1);
+                    }
+
                     // Skala supaya gambar muat di layar
                     const canvasRatio = canvas.width / canvas.height;
                     const imgRatio = img.width / img.height;
@@ -353,7 +357,7 @@
                         drawHeight = drawWidth / imgRatio;
                     }
 
-                    // Draw image dari tengah (karena sudah translate)
+                    // Draw image dari tengah
                     ctx.drawImage(
                         img,
                         -drawWidth / 2,
